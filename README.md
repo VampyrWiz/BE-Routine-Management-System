@@ -15,7 +15,24 @@ If you want to access the old original project, visit: [https://github.com/manis
 
 ## Table of Contents
 
-The following sections are included in this document: Overview; System Roles and Access Control; Features; Technology Stack; System Architecture; Installation and Setup; Project Structure; Backend API; Frontend Application; Database Design; Development; Testing; Deployment; Documentation; Contributing; Support; and License.
+The following sections are included in this document:
+
+- [Overview](#-overview)
+- [Features](#-features)
+- [Technology Stack](#-technology-stack)
+- [System Architecture](#-system-architecture)
+- [Quick Start](#-quick-start)
+- [Project Structure](#-project-structure)
+- [Backend API](#-backend-api)
+- [Frontend Application](#-frontend-application)
+- [Database Design](#-database-design)
+- [Authentication & Authorization](#-authentication--authorization)
+- [Development](#-development)
+- [Testing](#-testing)
+- [Deployment](#-deployment)
+- [Documentation](#-documentation)
+- [Contributing](#-contributing)
+- [Support](#-support)
 
 ## Overview
 
