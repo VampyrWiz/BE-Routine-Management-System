@@ -8,6 +8,7 @@ import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import TeacherExcelService from '../services/teacherExcelService';
 
+/** Placeholder hook for teacher Excel operations (replaced by PDF export). */
 const useTeacherExcelOperations = (teacherId) => {
   const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();

@@ -1,3 +1,4 @@
+/** Toggle between semester/group views to filter routine data. */
 import React from 'react';
 import { Radio, Space, Card, Typography, Tooltip } from 'antd';
 import { FilterOutlined, CalendarOutlined } from '@ant-design/icons';
@@ -5,6 +6,7 @@ import { useSemesterGroup, getSemesterGroupLabel } from '../contexts/SemesterGro
 
 const { Text } = Typography;
 
+/** Radio toggle between "Semester" and "Group" view modes. */
 const SemesterGroupToggle = ({ 
   size = 'default', 
   showLabel = true, 

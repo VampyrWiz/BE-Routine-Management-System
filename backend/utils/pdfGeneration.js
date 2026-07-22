@@ -1,3 +1,11 @@
+/**
+ * PDF Generation — base service and class-routine generator.
+ * Provides a reusable PDFDocument wrapper with table layout utilities,
+ * context-aware time-slot queries, and routine-data rendering that mirrors
+ * the frontend grid logic exactly. Specialized generators for teacher and
+ * room schedules extend this base class.
+ */
+
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');

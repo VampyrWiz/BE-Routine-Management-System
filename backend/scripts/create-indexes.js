@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 /**
  * Database Index Creation Script
- * Run: node backend/scripts/create-indexes.js
+ *
+ * Creates recommended MongoDB indexes for all core collections
+ * (RoutineSlot, Teacher, Room, Subject, Program, TimeSlot, User)
+ * to optimise query performance in the routine management system.
+ *
+ * Handles duplicate-key and conflicting-index errors gracefully so the
+ * script can be safely re-run after schema changes.
+ *
+ * Usage: node backend/scripts/create-indexes.js
  */
 
 const mongoose = require('mongoose');
@@ -9,6 +17,12 @@ require('dotenv').config();
 
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
+/**
+ * Connects to MongoDB, then creates indexes on each collection in sequence.
+ * The `safeCreateIndex` helper wraps each `createIndex` call and tolerates
+ * pre-existing indexes. After all indexes are built, per-collection stats
+ * (document count, index count, index size) are printed for verification.
+ */
 async function createIndexes() {
   try {
     console.log('🔗 Connecting to MongoDB...');

@@ -1,6 +1,12 @@
 /**
- * Complete Backend Test Suite
- * All backend tests in one comprehensive file
+ * Complete Backend API Test Suite (Jest)
+ *
+ * Integration test suite for all backend REST endpoints of the IOE Pulchowk
+ * Routine Management System. Covers health checks, CRUD operations, auth,
+ * error handling, data validation, and performance under concurrent load.
+ *
+ * Uses Jest structured with describe/it blocks for each API domain.
+ * Relies on shared helpers from testHelper.js for authentication.
  */
 
 const axios = require('axios');
@@ -18,6 +24,8 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 1. CONNECTIVITY & HEALTH TESTS
   // =====================================================
+  // Verifies the Express server is running, the /health endpoint responds,
+  // and the database connection is alive using admin credentials for login.
   describe('System Health & Connectivity', () => {
     test('Health check endpoint should be accessible', async () => {
       const response = await axios.get(`${API_BASE}/health`);
@@ -26,6 +34,7 @@ describe('Complete Backend API Test Suite', () => {
       expect(response.data).toHaveProperty('database', 'Connected');
     });
 
+    // Ensures the admin login endpoint returns a JWT token for valid credentials.
     test('Authentication should work with admin credentials', async () => {
       const loginResponse = await axios.post(`${API_BASE}/auth/login`, {
         email: 'admin@ioe.edu.np',
@@ -41,7 +50,10 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 2. TIME SLOTS MANAGEMENT
   // =====================================================
+  // Validates CRUD operations for time slots: fetching all slots and creating
+  // a new one (with cleanup). Time slots define lecture periods in the routine.
   describe('Time Slots Management', () => {
+    // Verifies the GET endpoint returns an array with each slot having _id, label, start/end times.
     test('GET /api/time-slots should return time slots list', async () => {
       const response = await axios.get(`${API_BASE}/time-slots`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -59,6 +71,8 @@ describe('Complete Backend API Test Suite', () => {
       }
     });
 
+    // Creates a test time slot via POST and then deletes it (cleanup). Accepts
+    // 400 if the slot already exists (idempotency / duplicate validation).
     test('POST /api/time-slots should create a new time slot', async () => {
       const newTimeSlot = {
         _id: 999,
@@ -99,7 +113,11 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 3. TEACHERS MANAGEMENT
   // =====================================================
+  // Verifies the teachers endpoint returns an array of teachers with required
+  // fields (_id, fullName, shortName) and that lookup by shortName works.
   describe('Teachers Management', () => {
+    // Confirms the GET /teachers response is an array where each entry has _id,
+    // fullName, and shortName properties.
     test('GET /api/teachers should return teachers list', async () => {
       const response = await axios.get(`${API_BASE}/teachers`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -116,6 +134,8 @@ describe('Complete Backend API Test Suite', () => {
       }
     });
 
+    // Ensures teachers can be found by matching their shortName field (used
+    // for display in routine grids and timetable views).
     test('Teacher lookup by short name should work', async () => {
       const response = await axios.get(`${API_BASE}/teachers`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -141,7 +161,11 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 4. SUBJECTS MANAGEMENT
   // =====================================================
+  // Validates the subjects endpoint returns a list of subjects (courses) that
+  // can be assigned to routine slots. Accepts an empty array if no subjects exist.
   describe('Subjects Management', () => {
+    // Checks GET /subjects returns status 200 and an array; each subject (if any)
+    // must include an _id field.
     test('GET /api/subjects should return subjects list', async () => {
       const response = await axios.get(`${API_BASE}/subjects`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -161,7 +185,11 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 5. ROOMS MANAGEMENT
   // =====================================================
+  // Tests the rooms endpoint, which may return data in either
+  // { success, data } object format or a plain array depending on the controller.
   describe('Rooms Management', () => {
+    // Handles two possible response shapes (object with success+data, or direct
+    // array) and verifies the correct fields are present in each case.
     test('GET /api/rooms should return rooms data', async () => {
       const response = await axios.get(`${API_BASE}/rooms`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -184,7 +212,10 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 6. DEPARTMENTS MANAGEMENT
   // =====================================================
+  // Validates departments CRUD: listing all departments and verifying that
+  // POST validation rejects entries missing the required fullName field.
   describe('Departments Management', () => {
+    // Checks GET /departments returns an array of department objects with _id and name.
     test('GET /api/departments should return departments list', async () => {
       const response = await axios.get(`${API_BASE}/departments`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -200,6 +231,8 @@ describe('Complete Backend API Test Suite', () => {
       }
     });
 
+    // Posts a department missing the required 'fullName' field and expects 400
+    // with validation errors that mention the missing field.
     test('POST /api/departments should validate required fields', async () => {
       const invalidDepartment = {
         shortName: 'TEST',
@@ -227,7 +260,11 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 7. ACADEMIC SESSIONS MANAGEMENT
   // =====================================================
+  // Tests access to academic session data (semester/year groupings). Handles
+  // both object-based { success } and plain array response formats.
   describe('Academic Sessions Management', () => {
+    // Retrieves academic sessions and checks for a 200 response. Accepts either
+    // a { success } object or a flat array as valid response shapes.
     test('GET /api/admin/sessions should be accessible', async () => {
       const response = await axios.get(`${API_BASE}/admin/sessions`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -251,7 +288,10 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 8. ROUTINE SLOTS MANAGEMENT
   // =====================================================
+  // Verifies that the routine-slots endpoint (individual slot entries within the
+  // timetable grid) is accessible and returns an array.
   describe('Routine Slots Management', () => {
+    // Checks GET /routine-slots returns 200 and the body is an array.
     test('GET /api/routine-slots should be accessible', async () => {
       const response = await axios.get(`${API_BASE}/routine-slots`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -265,7 +305,11 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 9. AUTHENTICATION & AUTHORIZATION
   // =====================================================
+  // Tests that protected routes correctly reject unauthenticated requests,
+  // invalid credentials, and malformed tokens with 401/403 status codes.
   describe('Authentication & Authorization', () => {
+    // Makes a GET to a protected route without an Authorization header and
+    // expects an HTTP 401 or 403 error.
     test('Protected endpoints should reject requests without token', async () => {
       try {
         await axios.get(`${API_BASE}/teachers`);
@@ -276,6 +320,8 @@ describe('Complete Backend API Test Suite', () => {
       }
     });
 
+    // Tries logging in with a non-existent email and wrong password; expects 400
+    // or 401 to confirm credential validation is enforced.
     test('Invalid credentials should be rejected', async () => {
       try {
         await axios.post(`${API_BASE}/auth/login`, {
@@ -288,6 +334,8 @@ describe('Complete Backend API Test Suite', () => {
       }
     });
 
+    // Sends a request with a deliberately fake JWT token to ensure the auth
+    // middleware rejects it with 401/403 rather than crashing.
     test('Invalid token should be rejected', async () => {
       try {
         await axios.get(`${API_BASE}/teachers`, {
@@ -304,7 +352,10 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 10. ERROR HANDLING
   // =====================================================
+  // Validates the server gracefully handles invalid routes and malformed
+  // request bodies by returning appropriate HTTP error codes.
   describe('Error Handling', () => {
+    // Requests a URL that does not exist on the server and asserts a 404 response.
     test('Non-existent endpoints should return 404', async () => {
       try {
         await axios.get(`${API_BASE}/nonexistent-endpoint`, {
@@ -316,6 +367,8 @@ describe('Complete Backend API Test Suite', () => {
       }
     });
 
+    // Sends invalid JSON as the request body and expects 400 or 422 to confirm
+    // the JSON parsing middleware catches syntax errors without crashing.
     test('Malformed JSON should be handled gracefully', async () => {
       try {
         await axios.post(`${API_BASE}/departments`, 'invalid json', {
@@ -334,7 +387,11 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 11. DATA INTEGRITY & VALIDATION
   // =====================================================
+  // Ensures Mongoose schema validation rejects incomplete documents and that
+  // the database connection remains stable under concurrent health checks.
   describe('Data Integrity & Validation', () => {
+    // Attempts to create a time slot with only the label field (missing required
+    // fields) and expects a 400/422 validation error.
     test('Time slot schema validation should work', async () => {
       const invalidTimeSlot = {
         // Missing required fields
@@ -351,6 +408,8 @@ describe('Complete Backend API Test Suite', () => {
       }
     });
 
+    // Fires five concurrent requests to the health endpoint to confirm the
+    // database connection does not drop under light parallel load.
     test('Database connectivity should be stable', async () => {
       // Make multiple concurrent requests to test stability
       const promises = Array(5).fill().map(() =>
@@ -369,7 +428,11 @@ describe('Complete Backend API Test Suite', () => {
   // =====================================================
   // 12. PERFORMANCE & LOAD
   // =====================================================
+  // Verifies the API can handle concurrent requests without errors and responds
+  // within acceptable time windows under light load.
   describe('Performance & Load', () => {
+    // Fires 10 simultaneous GET requests to /teachers and expects all to return
+    // 200 within 10 seconds, confirming basic concurrent-request resilience.
     test('API should handle multiple concurrent requests', async () => {
       const promises = Array(10).fill().map(() =>
         axios.get(`${API_BASE}/teachers`, {
@@ -389,6 +452,8 @@ describe('Complete Backend API Test Suite', () => {
       expect(endTime - startTime).toBeLessThan(10000);
     });
 
+    // Measures round-trip time for a GET /teachers request and asserts it
+    // completes in under 2 seconds to catch performance regressions.
     test('Large data requests should be handled efficiently', async () => {
       const startTime = Date.now();
       

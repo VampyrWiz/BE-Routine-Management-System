@@ -1,13 +1,24 @@
 /**
- * Migration script to update semesterGroup values for existing RoutineSlot records
- * This fixes the issue where old records have semesterGroup calculated with conventional odd/even logic
- * New logic: odd group = [2,4,5,7], even group = [1,3,6,8]
+ * Migration script to update semesterGroup values for existing RoutineSlot records.
+ *
+ * This fixes the issue where old records had semesterGroup calculated with
+ * conventional odd/even logic. The new grouping assigns:
+ *   - odd group  = semesters [2, 4, 5, 7]
+ *   - even group = semesters [1, 3, 6, 8]
+ *
+ * Run directly via `node backend/migrate-semester-groups.js` or import and
+ * call `updateSemesterGroups()` programmatically.
  */
 
 const mongoose = require('mongoose');
 const RoutineSlot = require('./models/RoutineSlot');
 const { getSemesterGroupName } = require('./utils/semesterGroupUtils');
 
+/**
+ * Iterates over every RoutineSlot document, compares its current semesterGroup
+ * against the correct value computed by getSemesterGroupName(), and updates
+ * any mismatched records. Logs a summary of updated / already-correct counts.
+ */
 async function updateSemesterGroups() {
   try {
     console.log('🔄 Starting semesterGroup migration...');

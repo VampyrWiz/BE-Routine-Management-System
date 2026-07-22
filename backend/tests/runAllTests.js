@@ -1,19 +1,24 @@
 /**
  * Master Test Runner for Backend System
- * This script runs all test suites in the correct order
+ *
+ * CLI entry point that orchestrates multiple test suites (Jest, standalone
+ * system tests, seed scripts, department tests) and prints a unified summary.
+ * Supports three modes: `basic` (connectivity only), `setup` (seed data), and
+ * `all` (full suite). Run with `node runAllTests.js [basic|setup|all]`.
  */
 
 const { spawn } = require('child_process');
 const path = require('path');
 
-// Test categories and their files (Currently using working test files only)
+// Map of test category names to arrays of Jest test file paths.
+// Currently configured to run only the working Jest suite.
 const testCategories = {
   'Working Tests': [
     './tests/backend-complete.test.js'
   ]
 };
 
-// Colors for console output
+// ANSI escape codes for colourised terminal output.
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -25,10 +30,13 @@ const colors = {
   cyan: '\x1b[36m'
 };
 
+// Prints a message to the console in the specified colour.
 function log(message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
+// Spawns a Jest child process for the given category of test files and
+// resolves with { category, status, code } when the process exits.
 function runTestCategory(categoryName, testFiles) {
   return new Promise((resolve, reject) => {
     log(`\n${'='.repeat(60)}`, 'cyan');
@@ -64,11 +72,18 @@ function runTestCategory(categoryName, testFiles) {
   });
 }
 
-// Import the working test system
 const { execSync } = require('child_process');
 
 /**
  * Run all tests in sequence (Working Implementation)
+ *
+ * Executes four stages in order:
+ *   1. Jest test suite (npm test)
+ *   2. Standalone system test (node complete-system-test.js)
+ *   3. Seed routine script (populates sample data)
+ *   4. Departments test script
+ *
+ * Prints a per-stage pass/fail result and an overall summary.
  */
 async function runAllTestsWorking() {
   console.log('🚀 Starting Complete Backend API Test Suite...');
@@ -179,6 +194,8 @@ async function runAllTestsWorking() {
 
 /**
  * Run basic connectivity tests only
+ * A lighter entry point that solely runs the Jest suite (npm test)
+ * for quick smoke-testing without seeding data or running extra scripts.
  */
 async function runBasicTests() {
   console.log('🔍 Running Basic Connectivity Tests...');
@@ -198,7 +215,9 @@ async function runBasicTests() {
 }
 
 /**
- * Run setup tests (create sample data for the system)  
+ * Run setup tests (create sample data for the system)
+ * Executes the seed-routine and test-departments scripts to populate the
+ * database with sample records for development/demo purposes.
  */
 async function runSetupTests() {
   console.log('⚙️ Running Setup Tests (Creating Sample Data)...');
@@ -223,7 +242,8 @@ async function runSetupTests() {
   }
 }
 
-// Command line interface
+// Parses the first CLI argument and dispatches to the appropriate runner.
+// Defaults to 'all' when no argument is provided.
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0] || 'all';
@@ -249,7 +269,7 @@ async function main() {
   }
 }
 
-// Run if called directly
+// Runs main() when invoked directly from the CLI; exits with 1 on fatal error.
 if (require.main === module) {
   main().catch(error => {
     console.error('Fatal error:', error);

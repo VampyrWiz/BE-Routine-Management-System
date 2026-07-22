@@ -1,3 +1,4 @@
+/** Admin CRUD for managing elective subjects and their groupings. */
 import React, { useState, useCallback } from 'react';
 import { 
   Card, 
@@ -40,6 +41,7 @@ import { electiveGroupsAPI, programsAPI } from '../../services/api';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+/** Admin page for managing elective groups and subject assignments. */
 const ElectiveManagement = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingElective, setEditingElective] = useState(null);

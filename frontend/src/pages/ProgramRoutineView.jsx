@@ -1,3 +1,4 @@
+/** Public view of a program's weekly routine with filters and PDF export. */
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Select, Space, Alert, Spin, Button, Row, Col, Tag, Statistic } from 'antd';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 // This component handles both program routine view and teacher routine view
+/** Inner component that fetches and renders the routine grid for a program. */
 const ProgramRoutineViewContent = ({ teacherId = null }) => {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);
@@ -932,6 +934,7 @@ const ProgramRoutineViewContent = ({ teacherId = null }) => {
 };
 
 // Main wrapper component with context provider
+/** Top-level program routine page: program selector + grid + PDF export. */
 const ProgramRoutineView = ({ teacherId = null }) => {
   return (
     <SemesterGroupProvider>

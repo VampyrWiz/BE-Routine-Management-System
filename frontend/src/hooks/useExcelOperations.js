@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import useRoutineSync from './useRoutineSync';
 import ExcelService from '../services/excelService';
 
+/** Placeholder hook for Excel operations (replaced by PDF export). */
 const useExcelOperations = (programCode, semester, section) => {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);

@@ -1,6 +1,10 @@
 /**
- * 🚀 Excel Data Upload Service - STUB VERSION
- * This is a stub implementation that maintains the API but removes Excel dependencies
+ * Excel Upload Service (Stub)
+ *
+ * Previously handled bulk data ingestion from Excel spreadsheets for departments,
+ * programs, subjects, teachers, rooms, lab groups, and elective groups. This
+ * functionality has been disabled; the stub preserves the API contract so that
+ * callers receive a consistent error response instead of crashing.
  */
 
 // Import all models
@@ -27,7 +31,13 @@ class ExcelUploadService {
   }
 
   /**
-   * Main upload handler - STUB
+   * Main upload handler (stub)
+   * Accepts a file path and data type but always returns an error indicating
+   * the Excel upload feature has been disabled.
+   * @param {string} filePath - Path to uploaded Excel file
+   * @param {string} dataType - Type of data being uploaded (routine, subjects, teachers, etc.)
+   * @param {Object} options - Additional upload options
+   * @returns {Object} Upload results with error details
    */
   async uploadFromExcel(filePath, dataType, options = {}) {
     try {
@@ -54,7 +64,7 @@ class ExcelUploadService {
   }
 
   /**
-   * Reset upload results
+   * Clears the upload results accumulator to prepare for a new upload cycle.
    */
   resetResults() {
     this.uploadResults = {
@@ -67,7 +77,8 @@ class ExcelUploadService {
   }
 
   /**
-   * Add error to results
+   * Records an error message in the results object and increments the failure count.
+   * @param {Object} error - Error object with message and details properties
    */
   addError(error) {
     this.uploadResults.errors.push(error);
@@ -75,13 +86,17 @@ class ExcelUploadService {
   }
 
   /**
-   * Get upload results
+   * Returns the accumulated upload results (success/failure counts and error list).
+   * @returns {Object} Upload results object
    */
   getResults() {
     return this.uploadResults;
   }
 
-  // Stub methods for all previous functionality
+  /**
+   * Stub: formerly parsed routine data from an Excel sheet and created RoutineSlot documents.
+   * Now returns an error indicating the feature is disabled.
+   */
   async processRoutineUpload() {
     this.addError({
       message: 'Excel upload functionality has been disabled',
@@ -89,7 +104,11 @@ class ExcelUploadService {
     });
     return this.getResults();
   }
-  
+
+  /**
+   * Stub: formerly imported subject definitions from an Excel sheet.
+   * Now returns an error indicating the feature is disabled.
+   */
   async processSubjectsUpload() {
     this.addError({
       message: 'Excel upload functionality has been disabled',
@@ -97,7 +116,11 @@ class ExcelUploadService {
     });
     return this.getResults();
   }
-  
+
+  /**
+   * Stub: formerly imported teacher records from an Excel sheet.
+   * Now returns an error indicating the feature is disabled.
+   */
   async processTeachersUpload() {
     this.addError({
       message: 'Excel upload functionality has been disabled',
@@ -105,7 +128,11 @@ class ExcelUploadService {
     });
     return this.getResults();
   }
-  
+
+  /**
+   * Stub: formerly imported room data from an Excel sheet.
+   * Now returns an error indicating the feature is disabled.
+   */
   async processRoomsUpload() {
     this.addError({
       message: 'Excel upload functionality has been disabled',
@@ -113,7 +140,11 @@ class ExcelUploadService {
     });
     return this.getResults();
   }
-  
+
+  /**
+   * Stub: formerly imported lab group definitions from an Excel sheet.
+   * Now returns an error indicating the feature is disabled.
+   */
   async processLabGroupsUpload() {
     this.addError({
       message: 'Excel upload functionality has been disabled',
@@ -121,7 +152,11 @@ class ExcelUploadService {
     });
     return this.getResults();
   }
-  
+
+  /**
+   * Stub: formerly imported elective group definitions from an Excel sheet.
+   * Now returns an error indicating the feature is disabled.
+   */
   async processElectiveGroupsUpload() {
     this.addError({
       message: 'Excel upload functionality has been disabled',

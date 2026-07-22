@@ -34,6 +34,7 @@ const ROOM_MESSAGES = {
 /**
  * Room Excel Export Service (Stub)
  */
+/** Placeholder room Excel export service (stub – PDF used instead). */
 class RoomExcelExportService {
   constructor(apiService) {
     this.apiService = apiService;

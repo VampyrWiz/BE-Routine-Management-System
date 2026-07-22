@@ -1,8 +1,22 @@
+/**
+ * Routine All Controller
+ *
+ * Provides a paginated, filterable endpoint for querying every routine slot
+ * across all programs, semesters, and sections.  Used by admin dashboards
+ * that need a bird's-eye view of the entire routine dataset.
+ */
 const RoutineSlot = require('../models/RoutineSlot');
 
-// @desc    Get all routines (paginated with filters)
-// @route   GET /api/routines
-// @access  Private
+/**
+ * @desc    Get all routines (paginated with filters)
+ * @route   GET /api/routines
+ * @access  Private
+ *
+ * Accepts optional query params (programId, semester, section, dayIndex,
+ * academicYearId, isActive) and paginates via page/limit.  Results are
+ * populated with program, subject, teacher, room and academic-year
+ * references so the frontend has everything it needs for display.
+ */
 exports.getAllRoutines = async (req, res) => {
   try {
     const {

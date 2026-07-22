@@ -1,3 +1,4 @@
+/** Page wrapper that renders the TeacherScheduleManager component. */
 import React from 'react';
 import TeacherScheduleManager from '../components/TeacherScheduleManager';
 
@@ -11,6 +12,7 @@ import TeacherScheduleManager from '../components/TeacherScheduleManager';
  * - Excel export functionality
  * - Automatic cache invalidation for data consistency
  */
+/** Page that embeds the TeacherScheduleManager component. */
 const TeacherRoutinePage = () => {
   return (
     <div className="teacher-routine-management mobile-stack-vertical" style={{ padding: '24px' }}>

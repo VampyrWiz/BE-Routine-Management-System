@@ -1,3 +1,4 @@
+/** Main routine grid – renders a day × slot table with multi-period merging. */
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { 
@@ -54,6 +55,7 @@ const {
 
 const { Text } = Typography;
 // Demo data function for demonstration purposes
+/** Returns mock routine data for demo/preview mode. */
 const getDemoRoutineData = (programCode, semester, section) => {
   return {
     data: {
@@ -100,6 +102,7 @@ const getDemoRoutineData = (programCode, semester, section) => {
 };
 
 // Demo time slots data
+/** Returns mock time slots for demo/preview mode. */
 const getDemoTimeSlots = () => {
   return {
     data: {
@@ -149,6 +152,7 @@ const getDemoTimeSlots = () => {
   };
 };
 
+/** Core routine grid: day × slot table with multi-period merging, modals, PDF. */
 const RoutineGrid = ({ 
   programCode, 
   semester, 

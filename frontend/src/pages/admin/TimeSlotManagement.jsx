@@ -1,3 +1,4 @@
+/** Admin CRUD for time slots – configure slot labels and timings. */
 import React, { useState } from 'react';
 import {
   Card,
@@ -30,6 +31,7 @@ import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
+/** Admin CRUD for time slot definitions (labels and start/end times). */
 const TimeSlotManagement = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);

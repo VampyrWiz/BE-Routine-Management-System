@@ -1,3 +1,4 @@
+/** Cache utility for teacher schedule data with invalidation broadcasting. */
 import React from 'react';
 import { teachersAPI } from '../services/api';
 import { broadcastRoutineChange } from './robustCacheInvalidation';
@@ -14,6 +15,7 @@ import { broadcastRoutineChange } from './robustCacheInvalidation';
  * @param {Object} queryClient - React Query client instance
  * @param {Array} affectedTeacherIds - Array of teacher IDs that need cache invalidation
  */
+/** Invalidate teacher schedule query keys, optionally filtering by IDs. */
 export const invalidateTeacherSchedules = async (queryClient, affectedTeacherIds = []) => {
   const invalidationPromises = [];
 
@@ -63,6 +65,7 @@ export const invalidateTeacherSchedules = async (queryClient, affectedTeacherIds
  * @param {Object} queryClient - React Query client instance
  * @param {Object} mutationResult - Result from routine mutation (assign/clear class)
  */
+/** Invalidate teacher/room caches after a routine mutation result. */
 export const handleRoutineChangeCache = async (queryClient, mutationResult) => {
   try {
     // Extract affected teacher IDs from mutation result
@@ -132,6 +135,7 @@ const extractAffectedTeachers = (mutationResult) => {
  * @param {Object} queryClient - React Query client instance
  * @returns {Object} Cache management functions
  */
+/** Hook to manually invalidate teacher schedule caches. */
 export const useTeacherScheduleCache = (queryClient) => {
   return {
     invalidateTeacherSchedules: (teacherIds) => invalidateTeacherSchedules(queryClient, teacherIds),
@@ -175,6 +179,7 @@ export const useTeacherScheduleCache = (queryClient) => {
  * @param {Object} queryClient - React Query client instance
  * @param {Array} watchedTeacherIds - Array of teacher IDs to monitor
  */
+/** Hook that auto-syncs teacher schedule caches when watched IDs change. */
 export const useAutoTeacherScheduleSync = (queryClient, watchedTeacherIds = []) => {
   const cacheManager = useTeacherScheduleCache(queryClient);
   

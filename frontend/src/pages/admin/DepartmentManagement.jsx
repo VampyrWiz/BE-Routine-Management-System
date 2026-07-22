@@ -1,3 +1,4 @@
+/** Admin CRUD for managing departments. */
 import React, { useState, useCallback } from 'react';
 import { 
   Card, 
@@ -36,6 +37,7 @@ import { departmentsAPI } from '../../services/api';
 
 const { Title, Text } = Typography;
 
+/** Admin CRUD page for university departments. */
 const DepartmentManagement = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);

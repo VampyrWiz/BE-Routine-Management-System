@@ -1,8 +1,23 @@
+/**
+ * Template Controller
+ *
+ * Manages reusable routine templates that can be applied to academic
+ * sessions.  Templates capture a complete weekly schedule (teacher,
+ * room, subject assignments) and can be cloned across semesters to
+ * speed up routine creation.
+ */
 const RoutineTemplate = require('../models/RoutineTemplate');
 const AcademicSession = require('../models/AcademicSession');
 const { generateTemplateAnalytics } = require('../services/analyticsService');
 
-// GET /api/admin/templates - Get all templates
+/**
+ * @desc    Get all templates (paginated)
+ * @route   GET /api/admin/templates
+ * @access  Private/Admin
+ *
+ * Supports filtering by category, program, and semester.  Returns
+ * paginated results sorted by creation date by default.
+ */
 const getAllTemplates = async (req, res) => {
   try {
     const { 
@@ -49,7 +64,11 @@ const getAllTemplates = async (req, res) => {
   }
 };
 
-// GET /api/admin/templates/:id - Get template by ID
+/**
+ * @desc    Get template by ID
+ * @route   GET /api/admin/templates/:id
+ * @access  Private/Admin
+ */
 const getTemplateById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -71,7 +90,14 @@ const getTemplateById = async (req, res) => {
   }
 };
 
-// POST /api/admin/templates - Create a new template
+/**
+ * @desc    Create a new template
+ * @route   POST /api/admin/templates
+ * @access  Private/Admin
+ *
+ * Records the authenticated user as the creator and stores the full
+ * template payload (including the slots array) in a single document.
+ */
 const createTemplate = async (req, res) => {
   try {
     const templateData = {
@@ -93,7 +119,14 @@ const createTemplate = async (req, res) => {
   }
 };
 
-// PUT /api/admin/templates/:id - Update template
+/**
+ * @desc    Update template
+ * @route   PUT /api/admin/templates/:id
+ * @access  Private/Admin
+ *
+ * Adds an audit-trail entry (date, userId, reason) before applying the
+ * update to the document.
+ */
 const updateTemplate = async (req, res) => {
   try {
     const { id } = req.params;
@@ -129,7 +162,13 @@ const updateTemplate = async (req, res) => {
   }
 };
 
-// DELETE /api/admin/templates/:id - Delete template
+/**
+ * @desc    Delete template
+ * @route   DELETE /api/admin/templates/:id
+ * @access  Private/Admin
+ *
+ * Performs a hard delete after confirming the template exists.
+ */
 const deleteTemplate = async (req, res) => {
   try {
     const { id } = req.params;
@@ -153,7 +192,14 @@ const deleteTemplate = async (req, res) => {
   }
 };
 
-// GET /api/admin/templates/:id/analytics - Get template analytics
+/**
+ * @desc    Get template analytics
+ * @route   GET /api/admin/templates/:id/analytics
+ * @access  Private/Admin
+ *
+ * Delegates to the analytics service to compute usage statistics,
+ * success rates and other metrics for a given template.
+ */
 const getTemplateAnalytics = async (req, res) => {
   try {
     const { id } = req.params;

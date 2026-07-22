@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { Modal, Form, DatePicker, message } from 'antd';
 import dayjs from 'dayjs';
 
+/** Modal for selecting a date range before exporting a routine PDF. */
 const ClassDateModal = ({ visible, onOk, onCancel, programCode, semester, section, exportType = 'class' }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);

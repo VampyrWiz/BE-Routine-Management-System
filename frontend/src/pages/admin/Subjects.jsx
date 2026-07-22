@@ -1,3 +1,4 @@
+/** Admin CRUD for subjects (admin-side subject management). */
 import React, { useState, useMemo, useCallback } from 'react';
 import { subjectsAPI } from '../../services/api';
 import { useFilters, useFilteredData } from '../../hooks/useFilters';
@@ -35,6 +36,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+/** Admin CRUD for subjects – add, edit, delete, and search. */
 const Subjects = () => {
   const [form] = Form.useForm();
   const [editModalVisible, setEditModalVisible] = useState(false);

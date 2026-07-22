@@ -1,3 +1,11 @@
+/**
+ * Conflict Detection for routine scheduling.
+ * Provides availability checks for teachers, rooms, and full schedule conflicts
+ * before assigning classes to time slots. Uses semester grouping (odd/even) to
+ * allow concurrent classes across different semester groups sharing the same
+ * time slot without resource conflicts.
+ */
+
 const RoutineSlot = require('../models/RoutineSlot');
 const { getSemesterGroupName } = require('./semesterGroupUtils');
 

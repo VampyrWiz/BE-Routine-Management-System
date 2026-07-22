@@ -1,3 +1,4 @@
+/** New version of teacher meeting scheduler with improved UX. */
 import React, { useState, useEffect } from 'react';
 import { Card, Select, Space, Typography, Alert, Spin, Button, Row, Col, Tag, message } from 'antd';
 import { UserOutlined, ReloadOutlined, CalendarOutlined, ClockCircleOutlined, TeamOutlined } from '@ant-design/icons';
@@ -6,6 +7,7 @@ import { teachersAPI, timeSlotsAPI } from '../services/api';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+/** New meeting scheduler with streamlined UX flow. */
 const TeacherMeetingScheduler = () => {
   const [teachers, setTeachers] = useState([]);
   const [selectedTeachers, setSelectedTeachers] = useState([]);

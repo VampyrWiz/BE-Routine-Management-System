@@ -4,6 +4,7 @@
  * to keep the UI working without Excel dependencies
  */
 
+/** Placeholder teacher Excel service (stub – PDF used instead). */
 class TeacherExcelService {
   constructor(teachersAPI) {
     // Stub constructor

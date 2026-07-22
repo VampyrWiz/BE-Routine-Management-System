@@ -1,3 +1,9 @@
+/**
+ * Database Manager - Singleton managing MongoDB lifecycle.
+ * Handles connection state tracking, event listeners for connectivity changes,
+ * pool health monitoring, and graceful shutdown on process termination signals.
+ */
+
 const mongoose = require('mongoose');
 
 class DatabaseManager {
@@ -7,6 +13,7 @@ class DatabaseManager {
     this.setupEventListeners();
   }
 
+  /** Register MongoDB connection event handlers and process termination hooks */
   setupEventListeners() {
     mongoose.connection.on('connected', () => {
       this.isConnected = true;
@@ -28,6 +35,7 @@ class DatabaseManager {
     process.on('SIGTERM', this.gracefulShutdown.bind(this));
   }
 
+  /** Close all database connections and exit the process cleanly */
   async gracefulShutdown() {
     console.log('🔄 Gracefully shutting down database connections...');
     try {
@@ -40,6 +48,7 @@ class DatabaseManager {
     }
   }
 
+  /** Return a summary of the current connection readiness and pool size */
   getConnectionStatus() {
     return {
       isConnected: this.isConnected,

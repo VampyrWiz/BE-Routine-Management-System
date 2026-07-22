@@ -1,8 +1,10 @@
+/** Route guard that checks auth token/admin role before rendering children. */
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Result, Button } from 'antd';
 import useAuthStore from '../contexts/authStore';
 
+/** Route guard that redirects unauthenticated users or non-admin users. */
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user, token } = useAuthStore();
 

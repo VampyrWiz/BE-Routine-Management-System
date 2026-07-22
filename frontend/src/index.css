@@ -1,3 +1,4 @@
+/* Global styles, CSS custom properties (design system), and Ant Design theme overrides. */
 @import "tailwindcss";
 
 :root {

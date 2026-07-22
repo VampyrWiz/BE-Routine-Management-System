@@ -17,9 +17,13 @@ const Teacher = require('../models/Teacher');
 const STANDARD_WEEKLY_HOURS = 15;
 
 /**
- * Calculates the hours a teacher is already scheduled for within an
- * academic year, optionally excluding a specific slot (used when a slot is
- * being updated rather than newly created).
+ * Calculate the total weekly hours a teacher is already assigned,
+ * summing durations from the TimeSlot collection. When updating an
+ * existing slot, pass excludeSlotId to omit it from the calculation.
+ * @param {string} teacherId - Teacher ObjectId
+ * @param {string} academicYearId - Academic year ObjectId
+ * @param {string} [excludeSlotId] - Slot to exclude (for updates)
+ * @returns {Promise<number>} Current scheduled weekly hours
  */
 async function getScheduledWeeklyHours(teacherId, academicYearId, excludeSlotId = null) {
   const query = {

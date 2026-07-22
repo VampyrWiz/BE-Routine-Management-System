@@ -1,3 +1,4 @@
+/** Manager component for viewing/editing room-wise routines with PDF export. */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
@@ -57,6 +58,7 @@ const { Option } = Select;
  * 
  * @component
  */
+/** Inner component that fetches and displays the room routine table. */
 const RoomScheduleManagerContent = () => {
   const queryClient = useQueryClient();
   const [selectedRoomId, setSelectedRoomId] = useState(null);
@@ -1213,6 +1215,7 @@ const RoomScheduleManagerContent = () => {
 };
 
 // Main wrapper component with context provider
+/** Top-level manager: room selector + RoomScheduleManagerContent + PDF export. */
 const RoomScheduleManager = () => {
   return (
     <SemesterGroupProvider>

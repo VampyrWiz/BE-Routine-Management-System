@@ -1,4 +1,14 @@
-// Use the unified RabbitMQ service
+/**
+ * Queue Service
+ *
+ * Thin convenience wrapper around rabbitmq.service. Provides a simplified API
+ * for connecting, publishing, consuming, and checking connection state. Also
+ * exposes a high-level publishTeacherScheduleUpdate() that the rest of the
+ * routine-management system uses to trigger teacher-schedule regeneration
+ * after slot changes. Respects the USE_RABBITMQ env flag so the system can
+ * operate without a message broker in development.
+ */
+
 const rabbitMQService = require('./rabbitmq.service');
 
 /**

@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import PDFService from '../services/pdfService';
 import { routinesAPI } from '../services/api';
 
+/** Hook orchestrating PDF export: modal, date selection, and PDF service call. */
 const usePDFOperations = (programCode, semester, section) => {
   const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();

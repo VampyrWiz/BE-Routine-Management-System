@@ -1,3 +1,8 @@
+/**
+ * Dev-only analysis script for debugging multi-period cell rendering in the routine grid.
+ * Injects test cells and verifies CSS, DOM structure, and error logs.
+ * @module analyze-multi-period
+ */
 // Detailed Multi-Period Implementation Analysis
 console.log('🔍 DETAILED MULTI-PERIOD ANALYSIS');
 

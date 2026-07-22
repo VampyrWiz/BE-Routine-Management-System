@@ -1,3 +1,4 @@
+/** Hook providing debounced search, filter, and pagination state for lists. */
 import { useState, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
 
@@ -7,6 +8,7 @@ import { debounce } from 'lodash';
  * @param {Function} onFilterChange - Optional callback when filters change
  * @returns {Object} Filter state and handlers
  */
+/** Hook providing debounced search term, active filters, and pagination state. */
 export const useFilters = (initialFilters = {}, onFilterChange = null) => {
   const [filters, setFilters] = useState(initialFilters);
   const [searchText, setSearchText] = useState('');
@@ -69,6 +71,7 @@ export const useFilters = (initialFilters = {}, onFilterChange = null) => {
  * @param {Object} filterConfig - Configuration for filter behavior
  * @returns {Array} Filtered data
  */
+/** Memoized filter pipeline that applies search + filters on a data array. */
 export const useFilteredData = (data = [], filters = {}, filterConfig = {}) => {
   return useMemo(() => {
     if (!Array.isArray(data)) {

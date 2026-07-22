@@ -1,0 +1,1 @@
+/** Subject manager page – placeholder, not yet implemented. */

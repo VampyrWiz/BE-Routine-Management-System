@@ -1,3 +1,10 @@
+/**
+ * Debug Utilities (Admin Only)
+ *
+ * Diagnostic endpoints for inspecting internal routine slot data, particularly
+ * multi-group lab configurations. All routes require HoD/DHoD authorization.
+ */
+
 const express = require('express');
 const router = express.Router();
 const RoutineSlot = require('../models/RoutineSlot');
@@ -7,7 +14,9 @@ const { protect, authorize } = require('../middleware/auth');
 // All debug routes require authentication and admin role
 router.use(protect, authorize('hod', 'dhod'));
 
-// Debug route to check multi-group data
+// @route   GET /api/debug/multi-groups/:programCode/:semester/:section
+// @desc    Debug: inspect routine slots with multi-group lab data for a section
+// @access  Private/Admin
 router.get('/multi-groups/:programCode/:semester/:section', async (req, res) => {
   try {
     const { programCode, semester, section } = req.params;

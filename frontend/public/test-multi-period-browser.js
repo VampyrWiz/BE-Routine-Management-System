@@ -1,3 +1,8 @@
+/**
+ * Dev-only test runner for multi-period functionality in the browser console.
+ * Includes DOM mutation observation to detect newly rendered merged cells.
+ * @module test-multi-period-browser
+ */
 // Test script to run in browser console for multi-period functionality testing
 console.log('🧪 Multi-Period Visual Merging Test Script');
 

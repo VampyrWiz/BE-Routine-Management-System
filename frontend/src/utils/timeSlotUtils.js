@@ -1,11 +1,11 @@
-// TimeSlot Management Utility
-// This module provides centralized logic for handling time slot IDs, mapping, and matching
+/** Utility for time slot ID mapping, matching, and display across timing modes. */
 
 /**
  * Normalize time slot ID to ensure consistent string representation
  * @param {string|number} id - The time slot ID
  * @returns {string} Normalized string ID
  */
+/** Normalise a time slot identifier to a consistent string. */
 export const normalizeTimeSlotId = (id) => {
   if (id === null || id === undefined) return '';
   return String(id);
@@ -16,6 +16,7 @@ export const normalizeTimeSlotId = (id) => {
  * @param {Array} timeSlots - Array of time slot objects
  * @returns {Map} Map with normalized ID as key and time slot object as value
  */
+/** Build a Map from time slot ID to slot object for O(1) lookups. */
 export const createTimeSlotMap = (timeSlots) => {
   const map = new Map();
   if (!Array.isArray(timeSlots)) return map;
@@ -36,6 +37,7 @@ export const createTimeSlotMap = (timeSlots) => {
  * @param {string|number} targetId - The ID to search for
  * @returns {Object|null} Found time slot or null
  */
+/** Find a time slot object by its ID string. */
 export const findTimeSlotById = (timeSlots, targetId) => {
   if (!Array.isArray(timeSlots) || targetId === null || targetId === undefined) {
     return null;
@@ -53,6 +55,7 @@ export const findTimeSlotById = (timeSlots, targetId) => {
  * @param {string|number} slotIdentifier - The identifier to find
  * @returns {number} Position index in the array or -1 if not found
  */
+/** Get the 0-based index of a slot within an ordered time slot list. */
 export const getTimeSlotPositionIndex = (timeSlots, slotIdentifier) => {
   if (!Array.isArray(timeSlots) || timeSlots.length === 0) return -1;
   
@@ -97,6 +100,7 @@ export const getTimeSlotPositionIndex = (timeSlots, slotIdentifier) => {
  * @param {number} dayCount - Number of days (default 7)
  * @returns {Object} Grid structure with normalized slot IDs as keys
  */
+/** Create an empty 2-D grid [dayIndex][slotId] initialised with null. */
 export const createRoutineGrid = (timeSlots, dayCount = 7) => {
   const grid = {};
   
@@ -122,6 +126,7 @@ export const createRoutineGrid = (timeSlots, dayCount = 7) => {
  * @param {Object} routineData - Routine data from API
  * @returns {Object} Populated grid with class data
  */
+/** Fill a grid with routine entries, handling multi-period (rowSpan) slots. */
 export const populateRoutineGrid = (grid, routineData) => {
   if (!grid || !routineData) return grid;
   
@@ -152,6 +157,7 @@ export const populateRoutineGrid = (grid, routineData) => {
  * @param {string|number} slotId - Time slot ID
  * @returns {Object|null} Class data or null
  */
+/** Retrieve class data at the given day+slot position. */
 export const getClassData = (routineGrid, dayIndex, slotId) => {
   if (!routineGrid || dayIndex === null || dayIndex === undefined) {
     return null;
@@ -169,6 +175,7 @@ export const getClassData = (routineGrid, dayIndex, slotId) => {
  * @param {Object} classData - Class data to set
  * @returns {boolean} Success status
  */
+/** Set class data at a specific day+slot position. */
 export const setClassData = (routineGrid, dayIndex, slotId, classData) => {
   if (!routineGrid || dayIndex === null || dayIndex === undefined) {
     return false;
@@ -189,6 +196,7 @@ export const setClassData = (routineGrid, dayIndex, slotId, classData) => {
  * @param {string|number} slotId - Time slot ID to validate
  * @returns {boolean} True if valid, false otherwise
  */
+/** Check whether a slot ID exists in the time slots list. */
 export const isValidTimeSlotId = (timeSlots, slotId) => {
   return findTimeSlotById(timeSlots, slotId) !== null;
 };
@@ -198,6 +206,7 @@ export const isValidTimeSlotId = (timeSlots, slotId) => {
  * @param {Array} timeSlots - Array of time slot objects
  * @returns {Array} Array of normalized time slot IDs
  */
+/** Extract ordered array of slot IDs from a time slots list. */
 export const getTimeSlotIds = (timeSlots) => {
   if (!Array.isArray(timeSlots)) return [];
   
@@ -211,6 +220,7 @@ export const getTimeSlotIds = (timeSlots) => {
  * @param {Array} timeSlots - Array of time slot objects
  * @param {string} context - Context description for logging
  */
+/** Log time slot details for debugging. */
 export const debugTimeSlotMapping = (timeSlots, context = '') => {
   if (!Array.isArray(timeSlots)) {
     console.log(`[TimeSlot Debug${context ? ' - ' + context : ''}] Invalid timeSlots array`);
@@ -231,6 +241,7 @@ export const debugTimeSlotMapping = (timeSlots, context = '') => {
  * @param {number} excelSlotIndex - Excel slot index (1-based)
  * @returns {string} Normalized internal slot ID
  */
+/** Convert an Excel-derived zero-based slot index to an internal slot ID. */
 export const mapExcelToInternalSlot = (timeSlots, excelSlotIndex) => {
   if (!Array.isArray(timeSlots)) {
     console.warn('mapExcelToInternalSlot: Invalid timeSlots array');
@@ -253,6 +264,7 @@ export const mapExcelToInternalSlot = (timeSlots, excelSlotIndex) => {
  * @param {string|number} internalSlotId - Internal slot ID
  * @returns {number} Excel slot index (1-based)
  */
+/** Convert an internal slot ID back to the Excel zero-based index. */
 export const mapInternalToExcelSlot = (timeSlots, internalSlotId) => {
   if (!Array.isArray(timeSlots)) {
     console.warn('mapInternalToExcelSlot: Invalid timeSlots array');
@@ -277,6 +289,7 @@ export const mapInternalToExcelSlot = (timeSlots, internalSlotId) => {
  * @param {Array} timeSlots - Array of time slot objects
  * @returns {Object} Validation result with details
  */
+/** Validate slot ordering and detect gaps/duplicates. */
 export const validateSlotPositions = (timeSlots) => {
   if (!Array.isArray(timeSlots)) {
     return { 
@@ -330,6 +343,7 @@ export const validateSlotPositions = (timeSlots) => {
  * @param {Array} timeSlots - Array of time slot objects for validation
  * @returns {Object} Populated grid with validation results
  */
+/** Enhanced grid population with better multi-period + slot position handling. */
 export const populateRoutineGridEnhanced = (grid, routineData, timeSlots = null) => {
   if (!grid || !routineData) {
     return { 

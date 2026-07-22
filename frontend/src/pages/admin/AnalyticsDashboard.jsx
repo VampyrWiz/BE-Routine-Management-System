@@ -1,3 +1,4 @@
+/** Analytics dashboard with charts and statistics about routines. */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -32,6 +33,7 @@ const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
 
+/** Dashboard with analytics charts (routine coverage, teacher load, etc.). */
 const AnalyticsDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);

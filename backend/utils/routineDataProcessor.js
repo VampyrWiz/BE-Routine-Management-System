@@ -1,6 +1,9 @@
 /**
- * Shared Routine Data Processing Logic
- * Used by both API responses and PDF generation to ensure consistency
+ * Routine Data Processor — shared transformation layer.
+ * Converts raw RoutineSlot documents into the frontend-compatible format
+ * used by both API JSON responses and PDF generators, guaranteeing that
+ * both views render identical data. Also handles multi-group class
+ * consolidation (e.g. Group A + Group B practicals displayed as one slot).
  */
 
 /**

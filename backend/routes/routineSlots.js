@@ -1,3 +1,12 @@
+/**
+ * Routine Slots (Direct CRUD)
+ *
+ * Provides direct CRUD operations on individual RoutineSlot documents.
+ * Includes conflict checking, bulk creation, elective class creation,
+ * and weekly schedule views. Used for lower-level slot manipulation
+ * outside the main scheduling workflow.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');

@@ -9,6 +9,7 @@ import { DownloadOutlined, FilePdfOutlined } from '@ant-design/icons';
 import usePDFOperations from '../hooks/usePDFOperations';
 import ClassDateModal from './ClassDateModal';
 
+/** PDF export button that opens the ClassDateModal for date selection. */
 const PDFActions = ({ 
   programCode, 
   semester, 

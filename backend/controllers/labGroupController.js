@@ -1,12 +1,26 @@
+/**
+ * Lab Group Controller
+ *
+ * Defines how a lab subject's student cohort is split into groups (e.g.
+ * Group A / Group B) for practical sessions.  Each group may have its
+ * own teacher and alternate-week schedule.  The controller also provides
+ * an auto-create endpoint that generates groups based on the curriculum.
+ */
 const LabGroup = require('../models/LabGroup');
 const ProgramSemester = require('../models/ProgramSemester');
 const Subject = require('../models/Subject');
 const Teacher = require('../models/Teacher');
 const { validationResult } = require('express-validator');
 
-// @desc    Create a new lab group
-// @route   POST /api/lab-groups
-// @access  Private/Admin
+/**
+ * @desc    Create a new lab group
+ * @route   POST /api/lab-groups
+ * @access  Private/Admin
+ *
+ * Saves a lab-group document with its sub-groups array and populates
+ * program/subject/academic-year references.  Enforces a unique index on
+ * the program+subject+semester+section combination.
+ */
 exports.createLabGroup = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -36,9 +50,14 @@ exports.createLabGroup = async (req, res) => {
   }
 };
 
-// @desc    Get all lab groups
-// @route   GET /api/lab-groups
-// @access  Private
+/**
+ * @desc    Get all lab groups
+ * @route   GET /api/lab-groups
+ * @access  Private
+ *
+ * Filters by programId, semester, section, academicYearId and isActive.
+ * Teacher references inside each group are populated.
+ */
 exports.getLabGroups = async (req, res) => {
   try {
     const { programId, semester, section, academicYearId, isActive } = req.query;
@@ -65,9 +84,14 @@ exports.getLabGroups = async (req, res) => {
   }
 };
 
-// @desc    Get lab group by ID
-// @route   GET /api/lab-groups/:id
-// @access  Private
+/**
+ * @desc    Get lab group by ID
+ * @route   GET /api/lab-groups/:id
+ * @access  Private
+ *
+ * Populates program, subject, academic-year and teacher details for a
+ * single lab group.
+ */
 exports.getLabGroupById = async (req, res) => {
   try {
     const labGroup = await LabGroup.findById(req.params.id)
@@ -90,9 +114,14 @@ exports.getLabGroupById = async (req, res) => {
   }
 };
 
-// @desc    Update lab group
-// @route   PUT /api/lab-groups/:id
-// @access  Private/Admin
+/**
+ * @desc    Update lab group
+ * @route   PUT /api/lab-groups/:id
+ * @access  Private/Admin
+ *
+ * If the update modifies the groups array, each teacher reference is
+ * validated for existence and activity before the changes are saved.
+ */
 exports.updateLabGroup = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -144,9 +173,14 @@ exports.updateLabGroup = async (req, res) => {
   }
 };
 
-// @desc    Delete lab group
-// @route   DELETE /api/lab-groups/:id
-// @access  Private/Admin
+/**
+ * @desc    Delete lab group
+ * @route   DELETE /api/lab-groups/:id
+ * @access  Private/Admin
+ *
+ * Blocks deletion if any active RoutineSlot references this lab group,
+ * preventing orphaned schedule entries.
+ */
 exports.deleteLabGroup = async (req, res) => {
   try {
     const labGroup = await LabGroup.findById(req.params.id);
@@ -179,9 +213,16 @@ exports.deleteLabGroup = async (req, res) => {
   }
 };
 
-// @desc    Auto-create lab groups for a program semester
-// @route   POST /api/lab-groups/auto-create
-// @access  Private/Admin
+/**
+ * @desc    Auto-create lab groups for a program semester
+ * @route   POST /api/lab-groups/auto-create
+ * @access  Private/Admin
+ *
+ * Scans the ProgramSemester curriculum for subjects flagged as requiring
+ * a lab, then creates lab-group documents for each section (AB / CD).
+ * Skips subjects that already have a lab group defined for the given
+ * program/semester/section to avoid duplicates.
+ */
 exports.autoCreateLabGroups = async (req, res) => {
   try {
     const { programId, semester, academicYearId } = req.body;

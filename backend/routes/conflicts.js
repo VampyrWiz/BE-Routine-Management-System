@@ -1,3 +1,11 @@
+/**
+ * Conflict Detection and Analysis
+ *
+ * Provides endpoints to detect and analyze scheduling conflicts across
+ * routine slots — teacher time clashes, room double-booking, section
+ * overlaps, and elective scheduling conflicts.
+ */
+
 const express = require('express');
 const router = express.Router();
 const conflictDetection = require('../services/conflictDetection');

@@ -1,3 +1,12 @@
+/**
+ * Elective Groups
+ *
+ * Manages elective subject groupings for 7th and 8th semester programs.
+ * Defines which subjects are available as electives and the selection rules
+ * (min/max number of electives per student). Supports adding/removing
+ * subjects from each elective group.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');

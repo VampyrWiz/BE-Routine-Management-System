@@ -1,9 +1,11 @@
+/** Grid component for visualizing/editing teacher meeting schedules. */
 import React from 'react';
 import { Card, Typography, Tag, Tooltip } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
+/** Grid showing teacher availability slots for meeting scheduling. */
 const MeetingSchedulerGrid = ({ searchResults, includeDays, selectedTeachers, allTeachers }) => {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   const slotsPerDay = 7; // 0-6 slots per day

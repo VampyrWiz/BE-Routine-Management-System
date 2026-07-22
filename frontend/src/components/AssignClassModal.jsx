@@ -1,3 +1,4 @@
+/** Modal for assigning/editing a routine entry (subject, teacher, room, multi-period). */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
@@ -51,6 +52,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+/** Main assignment modal – form for subject, teacher, room, multi-period config. */
 const AssignClassModal = ({
   visible,
   onCancel,

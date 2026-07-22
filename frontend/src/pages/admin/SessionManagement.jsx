@@ -1,3 +1,4 @@
+/** Admin CRUD for academic sessions (year/semester terms). */
 import React, { useState, useCallback } from 'react';
 import { 
   Card, 
@@ -42,6 +43,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { Step } = Steps;
 
+/** Admin CRUD for academic sessions (year/semester definitions). */
 const SessionManagement = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingSession, setEditingSession] = useState(null);

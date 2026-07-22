@@ -1,3 +1,4 @@
+/** Modal for assigning a class that spans multiple periods (rowSpan). */
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
@@ -42,6 +43,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+/** Modal for spanning a class across consecutive time slots. */
 const AssignClassSpannedModal = ({
   visible,
   onCancel,

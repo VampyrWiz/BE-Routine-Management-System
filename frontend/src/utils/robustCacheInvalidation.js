@@ -18,6 +18,7 @@ import { useEffect, useRef } from 'react';
  * Completely flush all routine-related caches and force fresh data fetch
  * This is the nuclear option - removes all caches and forces fresh data
  */
+/** Aggressively clear all routine-related caches by key prefix. */
 export const nukeAllRoutineRelatedCaches = async (queryClient) => {
   try {
     console.log('🔥 NUCLEAR CACHE FLUSH: Removing all routine-related caches...');
@@ -59,6 +60,7 @@ export const nukeAllRoutineRelatedCaches = async (queryClient) => {
 /**
  * Invalidate caches after class assignment with specific teacher and room data
  */
+/** Targeted invalidation after a class is assigned (with retry). */
 export const invalidateAfterClassAssignment = async (queryClient, options = {}) => {
   const {
     programCode,
@@ -132,6 +134,7 @@ export const invalidateAfterClassAssignment = async (queryClient, options = {}) 
 /**
  * Broadcast real-time change event to all components
  */
+/** Dispatch a custom event to notify other tabs/components of a routine change. */
 export const broadcastRoutineChange = (changeData) => {
   try {
     console.log(' Broadcasting routine change event:', changeData);
@@ -170,6 +173,7 @@ export const broadcastRoutineChange = (changeData) => {
  * The main function to call after successful class assignment
  * This combines all the strategies above
  */
+/** Orchestrate cache invalidation after a successful class assignment. */
 export const handleClassAssignmentSuccess = async (queryClient, assignmentData) => {
   try {
     console.log(' HANDLING CLASS ASSIGNMENT SUCCESS:', assignmentData);
@@ -200,6 +204,7 @@ export const handleClassAssignmentSuccess = async (queryClient, assignmentData) 
  * Properly implemented as a React hook with useEffect for cleanup
  */
 
+/** Hook that listens for routine change events and invalidates caches. */
 export const useRoutineChangeListener = (queryClient, callback) => {
   const callbackRef = useRef(callback);
   const queryClientRef = useRef(queryClient);

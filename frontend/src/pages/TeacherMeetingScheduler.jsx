@@ -1,3 +1,4 @@
+/** Page for scheduling teacher meetings and checking availability conflicts. */
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Select, Space, Typography, Alert, Spin, Button, Row, Col, Tag, message, Input } from 'antd';
 import { UserOutlined, ReloadOutlined, CalendarOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
@@ -8,6 +9,7 @@ import SemesterGroupToggle from '../components/SemesterGroupToggle';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+/** Inner component that drives the meeting scheduling logic and grid. */
 const TeacherMeetingSchedulerContent = () => {
   const [teachers, setTeachers] = useState([]);
   const [selectedTeachers, setSelectedTeachers] = useState([]);
@@ -672,6 +674,7 @@ const TeacherMeetingSchedulerContent = () => {
 };
 
 // Main component wrapped with provider
+/** Top-level meeting scheduler: teacher multi-select + availability grid. */
 const TeacherMeetingScheduler = () => {
   return (
     <SemesterGroupProvider>

@@ -10,6 +10,7 @@ import RoutineGrid from '../components/RoutineGrid';
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 
+/** Demo page showcasing Excel export (placeholder – now uses PDF). */
 const ExcelDemo = () => {
   const [selectedProgram, setSelectedProgram] = useState('BCT');
   const [selectedSemester, setSelectedSemester] = useState('1');

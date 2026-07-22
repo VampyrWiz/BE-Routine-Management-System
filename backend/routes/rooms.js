@@ -1,3 +1,11 @@
+/**
+ * Rooms / Classrooms
+ *
+ * CRUD operations for physical rooms used in scheduling — lecture halls,
+ * computer labs, electronics labs, tutorial rooms, and auditoriums.
+ * Supports schedule export for individual rooms or all rooms at once.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');

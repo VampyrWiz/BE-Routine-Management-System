@@ -1,3 +1,11 @@
+/**
+ * Conflict Detection Service
+ * Validates routine schedule slots for scheduling conflicts in the engineering college
+ * routine management system. Detects teacher double-booking, room conflicts, section
+ * overlaps, and elective scheduling conflicts — with semester-group awareness so that
+ * odd/even semester groups sharing a teacher or room at the same time are flagged.
+ */
+
 const RoutineSlot = require('../models/RoutineSlot');
 const LabGroup = require('../models/LabGroup');
 const ElectiveGroup = require('../models/ElectiveGroup');
@@ -7,9 +15,16 @@ const Room = require('../models/Room');
 const { validationResult } = require('express-validator');
 const { getSemesterGroupName } = require('../utils/semesterGroupUtils');
 
-// Helper function to determine if two semesters are in the same group
+/**
+ * Determines whether two semester numbers belong to the same semester group
+ * (e.g., odd-semester group: 1,3,5,7 vs even-semester group: 2,4,6,8).
+ * Uses the custom semester-grouping utility so that teacher/room conflicts
+ * are only flagged when both slots fall inside the same group.
+ * @param {number} semester1 - First semester number
+ * @param {number} semester2 - Second semester number
+ * @returns {boolean} True if both semesters are in the same group
+ */
 const areSemestersInSameGroup = (semester1, semester2) => {
-  // Use custom semester grouping logic
   return getSemesterGroupName(semester1) === getSemesterGroupName(semester2);
 };
 

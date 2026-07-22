@@ -1,3 +1,4 @@
+/** Login page – authenticates admin users via the auth store. */
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Card, Alert, Typography, Layout as AntLayout, Row, Col, Space } from 'antd';
@@ -7,6 +8,7 @@ import useAuthStore from '../contexts/authStore';
 const { Title, Text } = Typography;
 const { Content } = AntLayout;
 
+/** Login form with admin authentication via auth store. */
 const Login = () => {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError } = useAuthStore();

@@ -1,3 +1,10 @@
+/**
+ * Validation utilities for the routine management system.
+ * Provides input validation for routine slots, time slots, rooms, teachers,
+ * and subjects, plus input sanitization and express-validator middleware
+ * integration for consistent error responses across API endpoints.
+ */
+
 const { validationResult } = require('express-validator');
 
 /**

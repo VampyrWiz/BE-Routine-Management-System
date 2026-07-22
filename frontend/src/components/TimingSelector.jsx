@@ -1,8 +1,10 @@
+/** Radio selector for morning/day timing preference, linked to TimingContext. */
 import React from 'react';
 import { Card, Radio, Alert, Space } from 'antd';
 import { ClockCircleOutlined, SunOutlined, CloudOutlined } from '@ant-design/icons';
 import { isEvenSemesterGroup } from '../contexts/SemesterGroupContext';
 
+/** Radio group to switch between morning (6-slot) and day (8-slot) timing. */
 const TimingSelector = ({ 
   semester, 
   selectedTiming, 

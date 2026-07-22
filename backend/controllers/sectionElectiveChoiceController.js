@@ -1,12 +1,27 @@
+/**
+ * Section Elective Choice Controller
+ *
+ * Records which elective subjects each section has chosen for a given
+ * program / semester / academic year.  Choices flow through a workflow:
+ * Draft → Submitted → Approved / Rejected.  The controller enforces
+ * business rules at each transition.
+ */
 const SectionElectiveChoice = require('../models/SectionElectiveChoice');
 const ElectiveGroup = require('../models/ElectiveGroup');
 const Subject = require('../models/Subject');
 const Program = require('../models/Program');
 const { validationResult } = require('express-validator');
 
-// @desc    Create or update section elective choice
-// @route   POST /api/section-elective-choices
-// @access  Private/Admin
+/**
+ * @desc    Create or update section elective choice
+ * @route   POST /api/section-elective-choices
+ * @access  Private/Admin
+ *
+ * Creates a new choice document (status: Draft) after verifying that
+ * every selected subject belongs to its declared elective group and is
+ * available.  Duplicates for the same program/semester/section are
+ * rejected – the client must use PUT to update.
+ */
 exports.createSectionElectiveChoice = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -87,9 +102,14 @@ exports.createSectionElectiveChoice = async (req, res) => {
   }
 };
 
-// @desc    Get all section elective choices
-// @route   GET /api/section-elective-choices
-// @access  Private
+/**
+ * @desc    Get all section elective choices
+ * @route   GET /api/section-elective-choices
+ * @access  Private
+ *
+ * Filters by programId, academicYearId, semester, section and status.
+ * Returns populated group and subject references.
+ */
 exports.getSectionElectiveChoices = async (req, res) => {
   try {
     const { programId, academicYearId, semester, section, status } = req.query;
@@ -116,9 +136,11 @@ exports.getSectionElectiveChoices = async (req, res) => {
   }
 };
 
-// @desc    Get section elective choice by ID
-// @route   GET /api/section-elective-choices/:id
-// @access  Private
+/**
+ * @desc    Get section elective choice by ID
+ * @route   GET /api/section-elective-choices/:id
+ * @access  Private
+ */
 exports.getSectionElectiveChoiceById = async (req, res) => {
   try {
     const sectionChoice = await SectionElectiveChoice.findById(req.params.id)
@@ -141,9 +163,15 @@ exports.getSectionElectiveChoiceById = async (req, res) => {
   }
 };
 
-// @desc    Update section elective choice
-// @route   PUT /api/section-elective-choices/:id
-// @access  Private/Admin
+/**
+ * @desc    Update section elective choice
+ * @route   PUT /api/section-elective-choices/:id
+ * @access  Private/Admin
+ *
+ * Only Draft or Rejected choices can be updated.  If the request includes
+ * a new choices array each subject is validated against its group's
+ * availability before the update is applied.
+ */
 exports.updateSectionElectiveChoice = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -209,9 +237,15 @@ exports.updateSectionElectiveChoice = async (req, res) => {
   }
 };
 
-// @desc    Submit section elective choice for approval
-// @route   PUT /api/section-elective-choices/:id/submit
-// @access  Private/Admin
+/**
+ * @desc    Submit section elective choice for approval
+ * @route   PUT /api/section-elective-choices/:id/submit
+ * @access  Private/Admin
+ *
+ * Transitions a Draft choice to Submitted.  Before submission it
+ * validates that all mandatory elective groups for the section have a
+ * corresponding selection made.
+ */
 exports.submitSectionElectiveChoice = async (req, res) => {
   try {
     const sectionChoice = await SectionElectiveChoice.findById(req.params.id);
@@ -262,9 +296,14 @@ exports.submitSectionElectiveChoice = async (req, res) => {
   }
 };
 
-// @desc    Approve or reject section elective choice
-// @route   PUT /api/section-elective-choices/:id/approve
-// @access  Private/Admin
+/**
+ * @desc    Approve or reject section elective choice
+ * @route   PUT /api/section-elective-choices/:id/approve
+ * @access  Private/Admin
+ *
+ * Sets the status to Approved or Rejected based on the request body.
+ * Rejection requires a reason.  Only Submitted choices can be acted on.
+ */
 exports.approveSectionElectiveChoice = async (req, res) => {
   try {
     const { approved, rejectionReason } = req.body;
@@ -309,9 +348,14 @@ exports.approveSectionElectiveChoice = async (req, res) => {
   }
 };
 
-// @desc    Delete section elective choice
-// @route   DELETE /api/section-elective-choices/:id
-// @access  Private/Admin
+/**
+ * @desc    Delete section elective choice
+ * @route   DELETE /api/section-elective-choices/:id
+ * @access  Private/Admin
+ *
+ * Only choices that have not yet been Approved can be deleted.  Approved
+ * choices are immutable via deletion.
+ */
 exports.deleteSectionElectiveChoice = async (req, res) => {
   try {
     const sectionChoice = await SectionElectiveChoice.findById(req.params.id);
@@ -337,9 +381,15 @@ exports.deleteSectionElectiveChoice = async (req, res) => {
   }
 };
 
-// @desc    Get elective choices summary for a program/semester
-// @route   GET /api/section-elective-choices/summary
-// @access  Private
+/**
+ * @desc    Get elective choices summary for a program/semester
+ * @route   GET /api/section-elective-choices/summary
+ * @access  Private
+ *
+ * Aggregates all Approved choices for the given program/academic-year/
+ * semester, counting how many sections selected each subject.  Useful
+ * for resource planning (which subjects need how many teachers/rooms).
+ */
 exports.getElectiveChoicesSummary = async (req, res) => {
   try {
     const { programId, academicYearId, semester } = req.query;

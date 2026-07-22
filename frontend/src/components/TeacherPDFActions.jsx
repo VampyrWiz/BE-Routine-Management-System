@@ -11,6 +11,7 @@ import { teachersAPI } from '../services/api';
 import { useSemesterGroup } from '../contexts/SemesterGroupContext';
 import ClassDateModal from './ClassDateModal';
 
+/** PDF export button for teacher routine with date range selection. */
 const TeacherPDFActions = ({ 
   teacherId,
   teacherName = 'Teacher',

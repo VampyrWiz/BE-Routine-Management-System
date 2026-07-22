@@ -1,3 +1,11 @@
+/**
+ * Subjects
+ *
+ * CRUD operations for academic subjects including single and bulk creation
+ * and deletion. Subjects belong to one or more programs and define credit
+ * hours, weekly teaching hours, and semester placement.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { 

@@ -1,3 +1,12 @@
+/**
+ * Script to populate the BCT (Bachelor in Computer Engineering) syllabus
+ * into the database. Creates/updates the Department of Computer Engineering,
+ * the BCT program, all 8 semesters of subjects, ProgramSemester records,
+ * and an AcademicCalendar entry.
+ *
+ * Usage: node backend/populate-bct-syllabus.js
+ */
+
 const mongoose = require('mongoose');
 const Department = require('./models/Department');
 const Program = require('./models/Program');
@@ -116,10 +125,20 @@ const syllabusData = {
   ]
 };
 
+/**
+ * Removes all whitespace from a subject code string for consistent lookups.
+ */
 function normalizeCode(code) {
   return code.replace(/\s+/g, '');
 }
 
+/**
+ * Main routine: connects to MongoDB, ensures the DOCE department and BCT
+ * program exist, creates a default AcademicCalendar if none exists, then
+ * iterates through all 8 semesters creating/updating Subject documents and
+ * the corresponding ProgramSemester document with full subject metadata.
+ * Ends with a verification summary.
+ */
 async function populateBCTSyllabus() {
   try {
     console.log('Connecting to MongoDB...');

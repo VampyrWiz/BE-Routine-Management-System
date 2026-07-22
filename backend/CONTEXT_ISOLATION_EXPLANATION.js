@@ -1,8 +1,16 @@
 /**
- * TIME SLOT CONTEXT ISOLATION - HOW IT WORKS
- * 
- * This document explains how time slots are isolated by context (program/semester/section)
- * and demonstrates that the functionality you requested is already implemented.
+ * TIME SLOT CONTEXT ISOLATION — HOW IT WORKS
+ *
+ * This document explains how time slots are isolated by context
+ * (program / semester / section) in the routine management system.
+ * It demonstrates that the context-specific time slot creation,
+ * filtering, and PDF generation features are already fully implemented.
+ *
+ * Key design:
+ *   - Global time slots (isGlobal: true) are visible to every context.
+ *   - Context-specific slots (isGlobal: false, with programCode, semester,
+ *     section set) are visible ONLY inside that exact context.
+ *   - The PDF generator uses the same context-aware filtering as the frontend.
  */
 
 // ================================

@@ -1,3 +1,4 @@
+/** Main app layout shell with sidebar navigation, header, and footer. */
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Typography, Space, Tag } from 'antd';
@@ -30,6 +31,7 @@ import './EnhancedSidebar.css';
 const { Header, Sider, Content } = AntLayout;
 const { Title, Text } = Typography;
 
+/** Main layout: sidebar nav, top header, content outlet, and footer. */
 const Layout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);

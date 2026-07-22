@@ -1,3 +1,12 @@
+/**
+ * Program-Semester Curriculum
+ *
+ * Maps subjects to specific program/semester combinations, effectively
+ * defining the curriculum for each semester of every program. Supports
+ * retrieving subjects for a program+semester, viewing the full curriculum,
+ * and adding/removing subjects.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');

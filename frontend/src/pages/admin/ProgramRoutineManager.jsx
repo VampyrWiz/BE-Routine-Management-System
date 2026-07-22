@@ -1,3 +1,4 @@
+/** Admin page for editing program routines with the RoutineGrid component. */
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Select, Card, Typography, Button, Alert, message, Space, Row, Col, Spin, Tag, Statistic, Modal, Form } from 'antd';
@@ -25,6 +26,7 @@ const { Option } = Select;
  * 
  * @component
  */
+/** Admin page for editing program routine assignments using RoutineGrid. */
 const ProgramRoutineManager = () => {
   console.log('ProgramRoutineManager mounted');
   const queryClient = useQueryClient();

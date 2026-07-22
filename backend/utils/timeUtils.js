@@ -1,6 +1,8 @@
 /**
- * Time Utilities
- * Helper functions for time-related operations
+ * Time Utilities — time string validation and formatting.
+ * Validates HH:MM format, computes duration between two times,
+ * converts 24-hour to 12-hour AM/PM display, and produces
+ * display-friendly time-range labels for the timetable UI.
  */
 
 /**

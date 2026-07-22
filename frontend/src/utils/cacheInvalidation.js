@@ -15,6 +15,7 @@ import React, { useCallback, useEffect } from 'react';
  * @param {QueryClient} queryClient - React Query client instance
  * @param {Object} options - Additional options for cache invalidation
  */
+/** Invalidate every React Query key related to routines. */
 export const invalidateAllRoutineRelatedCaches = async (queryClient, options = {}) => {
   console.log('🔄 [CacheInvalidation] Starting comprehensive cache invalidation...');
   
@@ -131,6 +132,7 @@ export const invalidateAllRoutineRelatedCaches = async (queryClient, options = {
  * @param {QueryClient} queryClient - React Query client instance
  * @param {Object} context - Context about the assignment
  */
+/** Invalidate caches after a class is assigned (routine, teacher, room). */
 export const invalidateAfterClassAssignment = async (queryClient, context = {}) => {
   console.log('🎯 [CacheInvalidation] Invalidating caches after class assignment...', context);
   
@@ -230,6 +232,7 @@ export const invalidateAfterClassAssignment = async (queryClient, context = {}) 
  * @param {QueryClient} queryClient - React Query client instance
  * @param {Object} context - Context about the clearing
  */
+/** Invalidate caches after a class is removed from a slot. */
 export const invalidateAfterClassClear = async (queryClient, context = {}) => {
   console.log('🗑️ [CacheInvalidation] Invalidating caches after class clear...');
   
@@ -244,6 +247,7 @@ export const invalidateAfterClassClear = async (queryClient, context = {}) => {
  * @param {QueryClient} queryClient - React Query client instance
  * @param {Object} context - Context about the import
  */
+/** Invalidate caches after a bulk routine import. */
 export const invalidateAfterRoutineImport = async (queryClient, context = {}) => {
   console.log('📥 [CacheInvalidation] Invalidating caches after routine import...');
   
@@ -261,6 +265,7 @@ export const invalidateAfterRoutineImport = async (queryClient, context = {}) =>
  * @param {Object} routineData - Routine data structure
  * @returns {Array} Array of unique teacher IDs
  */
+/** Extract unique teacher IDs referenced in a routine data set. */
 export const extractTeacherIdsFromRoutine = (routineData) => {
   const teacherIds = new Set();
   
@@ -292,6 +297,7 @@ export const extractTeacherIdsFromRoutine = (routineData) => {
  * @param {Object} routineData - Routine data structure
  * @returns {Array} Array of unique room IDs
  */
+/** Extract unique room IDs referenced in a routine data set. */
 export const extractRoomIdsFromRoutine = (routineData) => {
   const roomIds = new Set();
   
@@ -319,6 +325,7 @@ export const extractRoomIdsFromRoutine = (routineData) => {
  * @param {QueryClient} queryClient - React Query client instance
  * @param {Array} watchedKeys - Keys to watch for changes
  */
+/** Hook that auto-invalidates watched query keys after mutations. */
 export const useAutoCacheInvalidation = (queryClient, watchedKeys = []) => {
   // Create a stable reference to the invalidate function
   const invalidateAll = useCallback(() => {

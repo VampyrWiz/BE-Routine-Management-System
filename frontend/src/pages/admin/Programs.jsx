@@ -1,3 +1,4 @@
+/** Admin CRUD for programs (academic programs/semesters/sections). */
 import React, { useCallback } from 'react';
 import { 
   Card, 
@@ -22,6 +23,7 @@ import { programsAPI } from '../../services/api';
 
 const { Title, Text } = Typography;
 
+/** Admin CRUD for programs (add/edit/delete programs and sections). */
 const Programs = () => {
   const fetchPrograms = useCallback(async () => {
     return await programsAPI.getPrograms();

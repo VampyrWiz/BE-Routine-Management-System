@@ -1,3 +1,11 @@
+/**
+ * Departments
+ *
+ * CRUD operations for engineering departments (e.g., Civil, Electrical,
+ * Electronics, Computer). Departments group teachers and programs together
+ * within the college hierarchy.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');

@@ -1,3 +1,4 @@
+/** Table component that renders a teacher's weekly schedule. */
 import React, { useMemo } from 'react';
 import { Table, Tag, Space, Typography, Empty } from 'antd';
 import { ClockCircleOutlined, BookOutlined, HomeOutlined } from '@ant-design/icons';
@@ -9,6 +10,7 @@ const { Text } = Typography;
  * Displays teacher schedule in a table format similar to routine grid
  * Includes spanned class merging logic similar to RoutineGrid
  */
+/** Ant Design Table rendering a teacher's day-wise schedule. */
 const TeacherScheduleGrid = ({ schedule, teacherInfo }) => {
   const timeSlots = schedule.timeSlots || [];
   const routine = schedule.routine || {};

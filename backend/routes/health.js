@@ -1,3 +1,10 @@
+/**
+ * Health Check
+ *
+ * Public endpoint for monitoring API and database connectivity status.
+ * Returns server uptime, memory usage, and MongoDB connection state.
+ */
+
 const express = require('express');
 const router = express.Router();
 const dbManager = require('../utils/dbManager');

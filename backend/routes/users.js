@@ -1,3 +1,11 @@
+/**
+ * Users (Admin Accounts)
+ *
+ * Manages user accounts with role-based access (HoD, DHoD). Supports
+ * registration, listing, profile retrieval, and account deletion.
+ * Users are linked to teacher profiles in the system.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { registerUser, getUserById, getUsers, deleteUser } = require('../controllers/userController');

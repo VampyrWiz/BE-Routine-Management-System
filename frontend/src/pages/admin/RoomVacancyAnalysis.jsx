@@ -1,3 +1,4 @@
+/** Admin page for analyzing room vacancy across days and time slots. */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -39,6 +40,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
 
+/** Page for analyzing room vacancy with daily/weekly time slot breakdowns. */
 const RoomVacancyAnalysis = () => {
   const [rooms, setRooms] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);

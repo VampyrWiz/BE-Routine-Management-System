@@ -1,9 +1,11 @@
+/** Context providing the active semester/group selection across the app. */
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
 // Create the semester group context
 const SemesterGroupContext = createContext();
 
 // Semester group provider component
+/** Context provider that holds the current semester/group selection state. */
 export const SemesterGroupProvider = ({ children }) => {
   const [semesterGroup, setSemesterGroup] = useState('odd'); // Default to 'odd' instead of 'all'
 
@@ -22,6 +24,7 @@ export const SemesterGroupProvider = ({ children }) => {
 };
 
 // Custom hook to use the semester group context
+/** Hook to read the current semester/group and its setter from context. */
 export const useSemesterGroup = () => {
   const context = useContext(SemesterGroupContext);
   if (!context) {
@@ -31,6 +34,7 @@ export const useSemesterGroup = () => {
 };
 
 // Helper function to filter routine data based on semester group
+/** Filter routine entries to only include those matching the selected group. */
 export const filterRoutineBySemesterGroup = (routineData, semesterGroup) => {
   console.log('🔍 filterRoutineBySemesterGroup called with:', { semesterGroup, routineData });
   
@@ -98,6 +102,7 @@ export const filterRoutineBySemesterGroup = (routineData, semesterGroup) => {
 };
 
 // Helper function to check if a semester belongs to a group
+/** Check whether a semester number belongs to the given group. */
 export const isSemesterInGroup = (semester, semesterGroup) => {
   // Custom semester grouping logic:
   // Odd group: [2, 4, 5, 7]
@@ -115,16 +120,19 @@ export const isSemesterInGroup = (semester, semesterGroup) => {
 };
 
 // Helper function to check if a semester is in the even group (1, 3, 6, 8)
+/** Return true if the semester is an even-numbered semester. */
 export const isEvenSemesterGroup = (semester) => {
   return isSemesterInGroup(semester, 'even');
 };
 
 // Helper function to check if a semester is in the odd group (2, 4, 5, 7)
+/** Return true if the semester is an odd-numbered semester. */
 export const isOddSemesterGroup = (semester) => {
   return isSemesterInGroup(semester, 'odd');
 };
 
 // Helper function to get semester group label
+/** Return a human-readable label for a semester group value. */
 export const getSemesterGroupLabel = (semesterGroup) => {
   switch (semesterGroup) {
     case 'odd':

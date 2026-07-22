@@ -1,9 +1,22 @@
+/**
+ * PDF Controller
+ *
+ * Exports timetable data as PDF documents.  Supports class routines,
+ * individual/all teacher schedules, individual/all room schedules,
+ * workload reports and utilisation reports.  All generation is
+ * delegated to the UnifiedPDFService.
+ */
 const UnifiedPDFService = require('../services/UnifiedPDFService');
 const Teacher = require('../models/Teacher');
 const Room = require('../models/Room');
 const RoutineSlot = require('../models/RoutineSlot');
 
-// Helper function to get teacher schedule data
+/**
+ * Build a teacher's weekly schedule object (same shape as the class-
+ * routine endpoint) for PDF rendering.  Fetches all active slots where
+ * the teacher is assigned, regardless of academic year, so the PDF
+ * always shows the complete picture.
+ */
 const getTeacherScheduleData = async (teacherId, academicYearId) => {
   const teacher = await Teacher.findById(teacherId);
   if (!teacher) {
@@ -110,7 +123,11 @@ const getTeacherScheduleData = async (teacherId, academicYearId) => {
   };
 };
 
-// Helper function to get room schedule data
+/**
+ * Build a room's weekly schedule object for PDF rendering.  Fetches all
+ * active slots assigned to this room so the PDF reflects the complete
+ * occupancy picture.
+ */
 const getRoomScheduleData = async (roomId, academicYearId) => {
   const room = await Room.findById(roomId);
   if (!room) {
@@ -233,38 +250,12 @@ const getRoomScheduleData = async (roomId, academicYearId) => {
  */
 
 /**
- * @swagger
- * /api/pdf/routine/export:
- *   get:
- *     summary: Export class routine to PDF
- *     tags: [PDF Export]
- *     parameters:
- *       - in: query
- *         name: programCode
- *         required: true
- *         schema:
- *           type: string
- *         description: Program code (e.g., BCT, BCE)
- *       - in: query
- *         name: semester
- *         required: true
- *         schema:
- *           type: integer
- *         description: Semester number
- *       - in: query
- *         name: section
- *         required: true
- *         schema:
- *           type: string
- *         description: Section (e.g., AB, CD)
- *     responses:
- *       200:
- *         description: PDF file generated successfully
- *         content:
- *           application/pdf:
- *             schema:
- *               type: string
- *               format: binary
+ * @desc    Export a single section's class routine to PDF
+ * @route   GET /api/pdf/routine/export
+ * @access  Public
+ *
+ * Generates a downloadable PDF timetable for the given program, semester
+ * and section by delegating to UnifiedPDFService.
  */
 const exportRoutineToPDF = async (req, res) => {
   try {
@@ -312,31 +303,9 @@ const exportRoutineToPDF = async (req, res) => {
 };
 
 /**
- * @swagger
- * /api/pdf/teacher/{teacherId}/export:
- *   get:
- *     summary: Export teacher schedule to PDF
- *     tags: [PDF Export]
- *     parameters:
- *       - in: path
- *         name: teacherId
- *         required: true
- *         schema:
- *           type: string
- *         description: Teacher ID
- *       - in: query
- *         name: academicYear
- *         schema:
- *           type: string
- *         description: Academic year ID (optional)
- *     responses:
- *       200:
- *         description: PDF file
- *         content:
- *           application/pdf:
- *             schema:
- *               type: string
- *               format: binary
+ * @desc    Export a single teacher's weekly schedule to PDF
+ * @route   GET /api/pdf/teacher/:teacherId/export
+ * @access  Public
  */
 const exportTeacherScheduleToPDF = async (req, res) => {
   try {
@@ -394,25 +363,9 @@ const exportTeacherScheduleToPDF = async (req, res) => {
 };
 
 /**
- * @swagger
- * /api/pdf/teacher/export/all:
- *   get:
- *     summary: Export all teachers' schedules to PDF
- *     tags: [PDF Export]
- *     parameters:
- *       - in: query
- *         name: academicYear
- *         schema:
- *           type: string
- *         description: Academic year ID (optional)
- *     responses:
- *       200:
- *         description: PDF file generated successfully
- *         content:
- *           application/pdf:
- *             schema:
- *               type: string
- *               format: binary
+ * @desc    Export schedules for all active teachers to a single PDF
+ * @route   GET /api/pdf/teacher/export/all
+ * @access  Public
  */
 const exportAllTeachersSchedulesToPDF = async (req, res) => {
   try {
@@ -452,31 +405,9 @@ const exportAllTeachersSchedulesToPDF = async (req, res) => {
 };
 
 /**
- * @swagger
- * /api/pdf/room/{roomId}/export:
- *   get:
- *     summary: Export room schedule to PDF
- *     tags: [PDF Export]
- *     parameters:
- *       - in: path
- *         name: roomId
- *         required: true
- *         schema:
- *           type: string
- *         description: Room ID
- *       - in: query
- *         name: academicYear
- *         schema:
- *           type: string
- *         description: Academic year ID (optional)
- *     responses:
- *       200:
- *         description: PDF file generated successfully
- *         content:
- *           application/pdf:
- *             schema:
- *               type: string
- *               format: binary
+ * @desc    Export a single room's weekly schedule to PDF
+ * @route   GET /api/pdf/room/:roomId/export
+ * @access  Public
  */
 const exportRoomScheduleToPDF = async (req, res) => {
   try {
@@ -534,25 +465,9 @@ const exportRoomScheduleToPDF = async (req, res) => {
 };
 
 /**
- * @swagger
- * /api/pdf/room/export/all:
- *   get:
- *     summary: Export all room schedules to PDF
- *     tags: [PDF Export]
- *     parameters:
- *       - in: query
- *         name: academicYear
- *         schema:
- *           type: string
- *         description: Academic year ID (optional)
- *     responses:
- *       200:
- *         description: PDF file generated successfully
- *         content:
- *           application/pdf:
- *             schema:
- *               type: string
- *               format: binary
+ * @desc    Export schedules for all rooms to a single PDF
+ * @route   GET /api/pdf/room/export/all
+ * @access  Public
  */
 const exportAllRoomSchedulesToPDF = async (req, res) => {
   try {
@@ -584,21 +499,12 @@ const exportAllRoomSchedulesToPDF = async (req, res) => {
 };
 
 /**
- * @swagger
- * /api/pdf/teacher/workload/{teacherId}:
- *   get:
- *     summary: Export teacher workload report to PDF
- *     tags: [PDF Export]
- *     parameters:
- *       - in: path
- *         name: teacherId
- *         required: true
- *         schema:
- *           type: string
- *         description: Teacher ID
- *     responses:
- *       200:
- *         description: PDF file generated successfully
+ * @desc    Export a teacher's workload report to PDF
+ * @route   GET /api/pdf/teacher/workload/:teacherId
+ * @access  Public
+ *
+ * Reuses the teacher-schedule PDF generation as a proxy for workload
+ * analysis (the schedule data effectively shows the workload).
  */
 const exportTeacherWorkloadReport = async (req, res) => {
   try {
@@ -646,21 +552,12 @@ const exportTeacherWorkloadReport = async (req, res) => {
 };
 
 /**
- * @swagger
- * /api/pdf/room/utilization/{roomId}:
- *   get:
- *     summary: Export room utilization report to PDF
- *     tags: [PDF Export]
- *     parameters:
- *       - in: path
- *         name: roomId
- *         required: true
- *         schema:
- *           type: string
- *         description: Room ID
- *     responses:
- *       200:
- *         description: PDF file generated successfully
+ * @desc    Export a room's utilisation report to PDF
+ * @route   GET /api/pdf/room/utilization/:roomId
+ * @access  Public
+ *
+ * Reuses the room-schedule PDF generation as a proxy for utilisation
+ * analysis.
  */
 const exportRoomUtilizationReport = async (req, res) => {
   try {
@@ -706,7 +603,14 @@ const exportRoomUtilizationReport = async (req, res) => {
   }
 };
 
-// Simplified building rooms export - use unified service
+/**
+ * @desc    Export schedules for all rooms in a building to PDF
+ * @route   GET /api/pdf/building/:buildingId/rooms/export
+ * @access  Public
+ *
+ * Currently delegates to the all-rooms PDF (building-level filtering is
+ * not yet implemented at the service layer).
+ */
 const exportBuildingRoomsSchedulesToPDF = async (req, res) => {
   try {
     const { buildingId } = req.params;
@@ -742,7 +646,14 @@ const exportBuildingRoomsSchedulesToPDF = async (req, res) => {
   }
 };
 
-// Enhanced exports using unified service
+/**
+ * @desc    Export all teachers' schedules (enhanced version)
+ * @route   GET /api/pdf/teachers/export/enhanced
+ * @access  Public
+ *
+ * Same underlying logic as exportAllTeachersSchedulesToPDF but exposed
+ * under a separate route for backward compatibility.
+ */
 const exportEnhancedAllTeachersSchedules = async (req, res) => {
   try {
     const { semesterGroup = 'all' } = req.query;
@@ -778,6 +689,14 @@ const exportEnhancedAllTeachersSchedules = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Export all rooms' schedules (enhanced version)
+ * @route   GET /api/pdf/rooms/export/enhanced
+ * @access  Public
+ *
+ * Same underlying logic as exportAllRoomSchedulesToPDF but exposed
+ * under a separate route for backward compatibility.
+ */
 const exportEnhancedAllRoomsSchedules = async (req, res) => {
   try {
 

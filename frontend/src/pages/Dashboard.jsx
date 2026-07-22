@@ -1,3 +1,4 @@
+/** Dashboard/home page with quick-action cards and routine overview. */
 import React, { useCallback, useState, useEffect } from 'react';
 import { 
   Row, 
@@ -31,6 +32,7 @@ import useAuthStore from '../contexts/authStore';
 
 const { Title, Text, Paragraph } = Typography;
 
+/** Dashboard page with stats cards and quick-action navigation tiles. */
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();

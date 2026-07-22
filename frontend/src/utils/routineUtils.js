@@ -3,6 +3,7 @@
  * @param {string} classType - Class type code (L, P, T)
  * @returns {string} - Full class type name
  */
+/** Convert class type code (L/P/T) to human-readable label. */
 export const formatClassType = (classType) => {
   const types = {
     'L': 'Lecture',
@@ -17,6 +18,7 @@ export const formatClassType = (classType) => {
  * @param {string} classType - Class type code (L, P, T)
  * @returns {string} - Color code
  */
+/** Return a colour for the given class type. */
 export const getClassTypeColor = (classType) => {
   const colors = {
     'L': 'blue',
@@ -31,6 +33,7 @@ export const getClassTypeColor = (classType) => {
  * @param {number} semester - Semester number
  * @returns {string} - Formatted semester
  */
+/** Format semester number to display string (e.g. 1 → "1st Semester"). */
 export const formatSemester = (semester) => {
   return `Semester ${semester}`;
 };
@@ -40,6 +43,7 @@ export const formatSemester = (semester) => {
  * @param {string} section - Section code
  * @returns {string} - Formatted section
  */
+/** Uppercase and trim a section string. */
 export const formatSection = (section) => {
   return `Section ${section}`;
 };
@@ -50,6 +54,7 @@ export const formatSection = (section) => {
  * @param {string} name - Program name
  * @returns {string} - Formatted program
  */
+/** Combine program code and name into a display string. */
 export const formatProgram = (code, name) => {
   return name ? `${name} (${code})` : code;
 };
@@ -60,6 +65,7 @@ export const formatProgram = (code, name) => {
  * @param {string} shortName - Teacher short name
  * @returns {string} - Formatted teacher
  */
+/** Format teacher name for display, preferring short name. */
 export const formatTeacher = (fullName, shortName) => {
   return shortName ? `${fullName} (${shortName})` : fullName;
 };
@@ -71,6 +77,7 @@ export const formatTeacher = (fullName, shortName) => {
  * @param {number} capacity - Room capacity
  * @returns {string} - Formatted room
  */
+/** Format room info into a single display string. */
 export const formatRoom = (name, building, capacity) => {
   let formatted = name;
   if (building) formatted += ` - ${building}`;
@@ -84,6 +91,7 @@ export const formatRoom = (name, building, capacity) => {
  * @param {Array} timeSlots - Time slots array
  * @returns {Object} - Grid data structure
  */
+/** Transform flat routine data into a 2D grid indexed by [day][slotId]. */
 export const generateRoutineGrid = (routineData, timeSlots) => {
   const grid = {};
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -113,6 +121,7 @@ export const generateRoutineGrid = (routineData, timeSlots) => {
  * @param {Object} slot - Routine slot data
  * @returns {boolean} - True if slot is empty
  */
+/** Return true if a grid slot has no scheduled class. */
 export const isEmptySlot = (slot) => {
   return !slot || !slot.subjectId;
 };
@@ -122,6 +131,7 @@ export const isEmptySlot = (slot) => {
  * @param {Object} routineData - Raw routine data from API
  * @returns {Object} - Statistics object
  */
+/** Compute aggregated stats from routine data (total classes, by type, etc.). */
 export const getRoutineStats = (routineData) => {
   if (!routineData || !routineData.routine) {
     return {
@@ -166,6 +176,7 @@ export const getRoutineStats = (routineData) => {
  * @param {Object} slotData - Slot data to validate
  * @returns {Object} - Validation result
  */
+/** Validate that a routine slot has required fields (subject, teacher, room). */
 export const validateRoutineSlot = (slotData) => {
   const errors = [];
   

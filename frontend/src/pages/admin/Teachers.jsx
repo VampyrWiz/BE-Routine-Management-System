@@ -1,3 +1,4 @@
+/** Admin CRUD for teachers – add, edit, delete with availability tagging. */
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { 
   Card, 
@@ -54,6 +55,7 @@ const DAYS_OF_WEEK = [
   'Saturday'
 ];
 
+/** Admin CRUD for teachers – manage teacher profiles and availability. */
 const Teachers = () => {
   // Component state
   const [editModalVisible, setEditModalVisible] = useState(false);

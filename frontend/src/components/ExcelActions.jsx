@@ -10,6 +10,7 @@ import { FileTextOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
+/** Placeholder Excel action buttons (functionality replaced by PDF export). */
 const ExcelActions = ({ programCode, semester, section }) => {
   return (
     <div className="excel-actions-placeholder" style={{ marginBottom: '16px' }}>

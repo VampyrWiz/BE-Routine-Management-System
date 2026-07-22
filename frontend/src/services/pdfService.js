@@ -49,7 +49,9 @@ const MESSAGES = {
 /**
  * PDF Export Service for Routines
  */
+/** Handles PDF export of program routine grids. */
 class PDFExportService {
+  /** Export a single program routine as PDF with optional date range. */
   async exportRoutine(programCode, semester, section, options = {}) {
     const { onStart, onSuccess, onError, startDate, endDate } = options;
     
@@ -76,6 +78,7 @@ class PDFExportService {
     }
   }
 
+  /** Export all sections of a semester as separate PDFs. */
   async exportAllSemesterRoutines(programCode, semester, options = {}) {
     const { onStart, onSuccess, onError } = options;
     
@@ -127,7 +130,9 @@ class PDFExportService {
 /**
  * PDF Export Service for Teachers
  */
+/** Handles PDF export of teacher schedules. */
 class TeacherPDFExportService {
+  /** Export a single teacher's weekly schedule as PDF. */
   async exportTeacherSchedule(teacherId, options = {}) {
     const { teacherName, semesterGroup = 'all', onStart, onSuccess, onError } = options;
     
@@ -154,6 +159,7 @@ class TeacherPDFExportService {
     }
   }
 
+  /** Export all teachers' schedules as individual PDFs. */
   async exportAllTeachersSchedules(options = {}) {
     const { semesterGroup = 'all', onStart, onSuccess, onError, onProgress } = options;
     
@@ -206,7 +212,9 @@ class TeacherPDFExportService {
 /**
  * PDF Export Service for Rooms
  */
+/** Handles PDF export of room-wise schedules. */
 class RoomPDFExportService {
+  /** Export a single room's schedule as PDF. */
   async exportRoomSchedule(roomId, options = {}) {
     const { roomName, semesterGroup = 'all', onStart, onSuccess, onError } = options;
     
@@ -233,6 +241,7 @@ class RoomPDFExportService {
     }
   }
 
+  /** Export all rooms' schedules as individual PDFs. */
   async exportAllRoomsSchedules(options = {}) {
     const { semesterGroup = 'all', onStart, onSuccess, onError } = options;
     
@@ -288,6 +297,7 @@ class RoomPDFExportService {
  * Main PDF Service - Facade Pattern (Export Only)
  * Replaces ExcelService for PDF operations
  */
+/** Facade that delegates to the appropriate sub-service based on export type. */
 class PDFService {
   constructor() {
     this.exportService = new PDFExportService();
@@ -296,6 +306,7 @@ class PDFService {
   }
 
   // Routine Export Methods
+  /** Generic export – determines type from options and delegates. */
   async export(programCode, semester, section, options = {}) {
     return this.exportService.exportRoutine(programCode, semester, section, options);
   }

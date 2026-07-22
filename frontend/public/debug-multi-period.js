@@ -1,3 +1,8 @@
+/**
+ * Dev-only debug script that inspects existing multi-period cells in the DOM
+ * and logs their computed styles, rowspan, and bounding rectangles.
+ * @module debug-multi-period
+ */
 // Debug script to verify multi-period visual merging
 console.log('🔧 Multi-Period Visual Merging Debug Script');
 

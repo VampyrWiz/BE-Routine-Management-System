@@ -1,3 +1,4 @@
+/** New version of program routine view with updated UX. */
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Select, Space, Alert, Spin, Button, Row, Col, Tag, Statistic } from 'antd';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +10,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 // This component handles both program routine view and teacher routine view
+/** New version of program routine view with updated layout and filters. */
 const ProgramRoutineView = ({ teacherId = null }) => {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);

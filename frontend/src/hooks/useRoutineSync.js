@@ -6,13 +6,11 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
+/** Hook for data synchronisation after import/export to keep caches consistent. */
 const useRoutineSync = () => {
   const queryClient = useQueryClient();
 
-  /**
-   * Comprehensive routine data synchronization
-   * This ensures all routine-related queries are properly invalidated and refetched
-   */
+  /** Invalidate and refetch all routine-related queries for the given program. */
   const syncRoutineData = useCallback(async (programCode, semester, section, options = {}) => {
     console.log('🔄 Starting comprehensive routine data sync:', { programCode, semester, section });
     

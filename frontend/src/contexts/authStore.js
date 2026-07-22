@@ -1,9 +1,11 @@
+/** Zustand store for authentication state (token, user, login/logout). */
 import { create } from 'zustand';
 import api from '../services/api';
 
 // API base URL
 const API_URL = '/api';
 
+/** Zustand store managing auth token, user profile, and login/logout actions. */
 const useAuthStore = create((set, get) => {
   // Safe localStorage access
   const getFromLocalStorage = (key) => {

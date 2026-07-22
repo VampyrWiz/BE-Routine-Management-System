@@ -1,10 +1,26 @@
+/**
+ * Session Controller
+ *
+ * Full lifecycle management for academic sessions (a term/semester
+ * container that groups routine slots, templates, and analytics).
+ * Sessions flow through PLANNING → DRAFT → APPROVED → ACTIVE →
+ * COMPLETED → ARCHIVED.  The controller also handles routine versioning,
+ * cross-session copying, template application, and analytics comparison.
+ */
 const AcademicSession = require('../models/AcademicSession');
 const RoutineSlot = require('../models/RoutineSlot');
 const RoutineTemplate = require('../models/RoutineTemplate');
 const { generateSessionAnalytics, optimizeRoutine } = require('../services/analyticsService');
 const mongoose = require('mongoose');
 
-// GET /api/admin/sessions/dashboard
+/**
+ * @desc    Get session dashboard overview
+ * @route   GET /api/admin/sessions/dashboard
+ * @access  Private/Admin
+ *
+ * Returns the current active session (with calculated stats), upcoming
+ * sessions, recent completed sessions, and aggregate counts by status.
+ */
 const getSessionDashboard = async (req, res) => {
   try {
     // Get current active session
@@ -71,7 +87,16 @@ const getSessionDashboard = async (req, res) => {
   }
 };
 
-// POST /api/admin/sessions/create
+/**
+ * @desc    Create a new academic session
+ * @route   POST /api/admin/sessions/create
+ * @access  Private/Admin
+ *
+ * Validates date ordering (deadline < start < end), checks for
+ * overlapping active/approved sessions, then creates the session in
+ * PLANNING status.  Optionally copies data from a previous session or
+ * applies a template if specified in the planning config.
+ */
 const createAcademicSession = async (req, res) => {
   try {
     const {
@@ -186,7 +211,15 @@ const createAcademicSession = async (req, res) => {
   }
 };
 
-// PUT /api/admin/sessions/:id/activate
+/**
+ * @desc    Activate a session (move from APPROVED to ACTIVE)
+ * @route   PUT /api/admin/sessions/:id/activate
+ * @access  Private/Admin
+ *
+ * Only APPROVED sessions can be activated.  Requires the routine to be
+ * at least 80% complete.  Any currently ACTIVE session is automatically
+ * marked COMPLETED.
+ */
 const activateSession = async (req, res) => {
   try {
     const { id } = req.params;
@@ -254,7 +287,14 @@ const activateSession = async (req, res) => {
   }
 };
 
-// PUT /api/admin/sessions/:id/complete
+/**
+ * @desc    Complete an active session
+ * @route   PUT /api/admin/sessions/:id/complete
+ * @access  Private/Admin
+ *
+ * Generates session analytics, sets status to COMPLETED, and schedules
+ * archival six months in the future.
+ */
 const completeSession = async (req, res) => {
   try {
     const { id } = req.params;
@@ -316,7 +356,15 @@ const completeSession = async (req, res) => {
   }
 };
 
-// POST /api/admin/sessions/:id/routine/copy-from/:sourceId
+/**
+ * @desc    Copy routine from a source session into the current session
+ * @route   POST /api/admin/sessions/:id/routine/copy-from/:sourceId
+ * @access  Private/Admin
+ *
+ * Copies all routine slots from source to target, with options to
+ * preserve or replace teacher/room assignments.  Target must be in
+ * PLANNING status.
+ */
 const copyRoutineFromSession = async (req, res) => {
   try {
     const { id: targetSessionId, sourceId } = req.params;
@@ -361,7 +409,14 @@ const copyRoutineFromSession = async (req, res) => {
   }
 };
 
-// PUT /api/admin/sessions/:id/routine/version
+/**
+ * @desc    Create a new routine version (archives the current one)
+ * @route   PUT /api/admin/sessions/:id/routine/version
+ * @access  Private/Admin
+ *
+ * Archives all current-version slots and bumps the version counter so
+ * subsequent edits create a fresh set of routable slots.
+ */
 const createRoutineVersion = async (req, res) => {
   try {
     const { id } = req.params;
@@ -437,7 +492,14 @@ const createRoutineVersion = async (req, res) => {
   }
 };
 
-// GET /api/admin/sessions/:id/analytics
+/**
+ * @desc    Get analytics for a session
+ * @route   GET /api/admin/sessions/:id/analytics
+ * @access  Private/Admin
+ *
+ * Delegates to the analytics service.  Optionally includes a comparison
+ * with the previous semester's session if includeComparison=true.
+ */
 const getSessionAnalytics = async (req, res) => {
   try {
     const { id } = req.params;
@@ -488,8 +550,15 @@ const getSessionAnalytics = async (req, res) => {
   }
 };
 
-// Helper Functions
+// ---------------------------------------------------------------------------
+//  Helper Functions
+// ---------------------------------------------------------------------------
 
+/**
+ * Copy all routine slots from a source session into a target session.
+ * Optionally preserves or discards teacher/room assignments based on
+ * the options object.  Sets planning completion to 70 % after copying.
+ */
 async function copyPreviousSession(targetSessionId, sourceSessionId, userId, options = {}) {
   const sourceSlots = await RoutineSlot.find({ 
     academicSessionId: sourceSessionId,
@@ -535,6 +604,10 @@ async function copyPreviousSession(targetSessionId, sourceSessionId, userId, opt
   };
 }
 
+/**
+ * Apply a RoutineTemplate document to a session.  Sets planning
+ * completion to 60 % after application.
+ */
 async function applyTemplate(sessionId, templateId, userId) {
   const template = await RoutineTemplate.findById(templateId);
   if (!template) {
@@ -553,6 +626,11 @@ async function applyTemplate(sessionId, templateId, userId) {
   return result;
 }
 
+/**
+ * Assess how complete a session's routine is by comparing the actual
+ * number of RoutineSlot documents against an expected count derived
+ * from the session configuration.
+ */
 async function checkRoutineCompleteness(sessionId) {
   const session = await AcademicSession.findById(sessionId);
   const routineSlots = await RoutineSlot.find({ 
@@ -592,6 +670,11 @@ async function checkRoutineCompleteness(sessionId) {
   };
 }
 
+/**
+ * Estimate the number of routine slots a session should have based on
+ * its working days, daily slots, and total weeks.  Uses an 80 %
+ * utilisation heuristic.
+ */
 function calculateExpectedSlots(session) {
   // Simplified calculation - would be more complex in reality
   const workingDays = session.configuration.workingDays.length;
@@ -602,7 +685,14 @@ function calculateExpectedSlots(session) {
   return Math.round(workingDays * slotsPerDay * 0.8); // 80% utilization estimate
 }
 
-// GET /api/admin/sessions - Get all sessions with filtering and pagination
+/**
+ * @desc    Get all sessions (paginated, filterable)
+ * @route   GET /api/admin/sessions
+ * @access  Private/Admin
+ *
+ * Filters by status, academicYear, semester.  Paginated with sort
+ * support.  Populates creator and approver references.
+ */
 const getAllSessions = async (req, res) => {
   try {
     const { 
@@ -652,7 +742,11 @@ const getAllSessions = async (req, res) => {
   }
 };
 
-// GET /api/admin/sessions/:id - Get a specific session by ID
+/**
+ * @desc    Get a specific session by ID
+ * @route   GET /api/admin/sessions/:id
+ * @access  Private/Admin
+ */
 const getSessionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -677,7 +771,14 @@ const getSessionById = async (req, res) => {
   }
 };
 
-// PUT /api/admin/sessions/:id - Update a session
+/**
+ * @desc    Update a session
+ * @route   PUT /api/admin/sessions/:id
+ * @access  Private/Admin
+ *
+ * Adds an audit-trail entry (date, userId, reason) before applying
+ * the update via $set.
+ */
 const updateSession = async (req, res) => {
   try {
     const { id } = req.params;
@@ -713,7 +814,14 @@ const updateSession = async (req, res) => {
   }
 };
 
-// DELETE /api/admin/sessions/:id - Delete a session
+/**
+ * @desc    Delete a session (PLANNING status only)
+ * @route   DELETE /api/admin/sessions/:id
+ * @access  Private/Admin
+ *
+ * Only sessions in PLANNING status can be deleted.  Removes both the
+ * session document and its associated routine slots.
+ */
 const deleteSession = async (req, res) => {
   try {
     const { id } = req.params;
@@ -747,7 +855,14 @@ const deleteSession = async (req, res) => {
   }
 };
 
-// PUT /api/admin/sessions/:id/archive - Archive a completed session
+/**
+ * @desc    Archive a completed session
+ * @route   PUT /api/admin/sessions/:id/archive
+ * @access  Private/Admin
+ *
+ * Only COMPLETED sessions can be archived.  Records who archived it and
+ * when, along with optional notes.
+ */
 const archiveSession = async (req, res) => {
   try {
     const { id } = req.params;
@@ -786,7 +901,14 @@ const archiveSession = async (req, res) => {
   }
 };
 
-// PUT /api/admin/sessions/:id/approve - Approve a session that's in DRAFT status
+/**
+ * @desc    Approve a session (move from DRAFT to APPROVED)
+ * @route   PUT /api/admin/sessions/:id/approve
+ * @access  Private/Admin
+ *
+ * Only DRAFT sessions can be approved.  Records the approving user,
+ * date, and optional notes.
+ */
 const approveSession = async (req, res) => {
   try {
     const { id } = req.params;
@@ -825,7 +947,14 @@ const approveSession = async (req, res) => {
   }
 };
 
-// GET /api/admin/sessions/:id/routine/versions - Get all versions of a session's routine
+/**
+ * @desc    Get all routine versions for a session
+ * @route   GET /api/admin/sessions/:id/routine/versions
+ * @access  Private/Admin
+ *
+ * Lists all versions tracked on the session document, enriched with
+ * the slot count for each version.
+ */
 const getRoutineVersions = async (req, res) => {
   try {
     const { id } = req.params;
@@ -864,7 +993,15 @@ const getRoutineVersions = async (req, res) => {
   }
 };
 
-// PUT /api/admin/sessions/:id/routine/rollback/:version - Rollback to a specific version
+/**
+ * @desc    Rollback a session's routine to a specific version
+ * @route   PUT /api/admin/sessions/:id/routine/rollback/:version
+ * @access  Private/Admin
+ *
+ * Updates the session's currentVersion pointer to the requested version.
+ * The actual slot data for that version is expected to still exist in
+ * the RoutineSlot collection (archived, not deleted).
+ */
 const rollbackToVersion = async (req, res) => {
   try {
     const { id, version } = req.params;
@@ -902,7 +1039,15 @@ const rollbackToVersion = async (req, res) => {
   }
 };
 
-// POST /api/admin/sessions/:id/routine/apply-template/:templateId - Apply template to session
+/**
+ * @desc    Apply a template to a session's routine
+ * @route   POST /api/admin/sessions/:id/routine/apply-template/:templateId
+ * @access  Private/Admin
+ *
+ * Iterates over the template's slots and creates corresponding RoutineSlot
+ * documents for the session.  Optionally overwrites existing slots if
+ * overwriteExisting=true.  Updates template usage statistics.
+ */
 const applyTemplateToSession = async (req, res) => {
   try {
     const { id, templateId } = req.params;
@@ -974,7 +1119,14 @@ const applyTemplateToSession = async (req, res) => {
   }
 };
 
-// POST /api/admin/sessions/:id/routine/save-as-template - Save session as template
+/**
+ * @desc    Save a session's routine as a reusable template
+ * @route   POST /api/admin/sessions/:id/routine/save-as-template
+ * @access  Private/Admin
+ *
+ * Creates a RoutineTemplate document from the current version's slot
+ * data so it can be applied to future sessions.
+ */
 const saveSessionAsTemplate = async (req, res) => {
   try {
     const { id } = req.params;
@@ -1041,7 +1193,15 @@ const saveSessionAsTemplate = async (req, res) => {
   }
 };
 
-// GET /api/admin/sessions/:id/analytics/comparison/:compareSessionId - Compare analytics between two sessions
+/**
+ * @desc    Compare analytics between two sessions
+ * @route   GET /api/admin/sessions/:id/analytics/comparison/:compareSessionId
+ * @access  Private/Admin
+ *
+ * Generates analytics for both sessions and computes deltas for
+ * utilisation, workload balance, and conflict counts.  Also produces
+ * improvement-area insights.
+ */
 const compareSessionAnalytics = async (req, res) => {
   try {
     const { id, compareSessionId } = req.params;
@@ -1114,7 +1274,10 @@ const compareSessionAnalytics = async (req, res) => {
   }
 };
 
-// Helper functions for analytics calculations
+// ---------------------------------------------------------------------------
+//  Analytics Trend Helpers
+// ---------------------------------------------------------------------------
+
 function calculateTeacherWorkloadTrend(sessionAnalytics) {
   // Simple example implementation
   const firstSession = sessionAnalytics[sessionAnalytics.length - 1];
@@ -1166,7 +1329,15 @@ function identifyUnderutilizedSlots(sessionAnalytics) {
   return "Friday afternoon consistently underutilized - opportunity for electives";
 }
 
-// GET /api/admin/sessions/analytics/cross-session - Get cross-session analytics
+/**
+ * @desc    Get cross-session trend analytics
+ * @route   GET /api/admin/sessions/analytics/cross-session
+ * @access  Private/Admin
+ *
+ * Analyses the last 5 completed/archived sessions to produce trend data
+ * for teacher workload, room utilisation, conflict reduction, and
+ * popular time slots.  Requires at least 2 completed sessions.
+ */
 const getCrossSessionAnalytics = async (req, res) => {
   try {
     // Get completed and archived sessions
@@ -1229,7 +1400,15 @@ const getCrossSessionAnalytics = async (req, res) => {
   }
 };
 
-// POST /api/admin/sessions/:id/routine/optimize - Optimize session routine
+/**
+ * @desc    Optimise a session's routine based on given goals
+ * @route   POST /api/admin/sessions/:id/routine/optimize
+ * @access  Private/Admin
+ *
+ * Calls the optimisation service, which may adjust slot assignments to
+ * improve metrics (e.g. minimise conflicts, balance workload).  Creates
+ * a new version if changes were applied.
+ */
 const optimizeSessionRoutine = async (req, res) => {
   try {
     const { id } = req.params;
@@ -1275,7 +1454,15 @@ const optimizeSessionRoutine = async (req, res) => {
   }
 };
 
-// POST /api/admin/sessions/:id/routine/validate - Validate session routine
+/**
+ * @desc    Validate a session's routine for conflicts
+ * @route   POST /api/admin/sessions/:id/routine/validate
+ * @access  Private/Admin
+ *
+ * Iterates over all routine slots for the current version, detecting
+ * teacher and room conflicts (same person/room in two places at once).
+ * Returns counts and detailed conflict info with suggestions.
+ */
 const validateSessionRoutine = async (req, res) => {
   try {
     const { id } = req.params;
@@ -1380,7 +1567,14 @@ const validateSessionRoutine = async (req, res) => {
   }
 };
 
-// POST /api/admin/sessions/:id/routine/conflicts - Get conflicts in session
+/**
+ * @desc    Get all conflicts in a session's routine
+ * @route   POST /api/admin/sessions/:id/routine/conflicts
+ * @access  Private/Admin
+ *
+ * Reuses the validation logic from validateSessionRoutine and returns
+ * solely the conflict results.
+ */
 const getSessionConflicts = async (req, res) => {
   try {
     const { id } = req.params;

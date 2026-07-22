@@ -1,3 +1,12 @@
+/**
+ * Time Slots
+ *
+ * Defines the daily time periods used in the routine grid (e.g., 6:00-6:50,
+ * 7:40-8:30). Supports multiple day types (Regular, Saturday, Holiday),
+ * categories (Morning, Afternoon, Evening), and context-specific slots
+ * for different program/semester/section combinations.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');

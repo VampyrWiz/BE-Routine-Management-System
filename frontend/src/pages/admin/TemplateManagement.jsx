@@ -1,3 +1,4 @@
+/** Admin page for managing routine templates (save/load routine layouts). */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -43,6 +44,7 @@ const { Option } = Select;
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
+/** Admin page for saving/loading routine templates. */
 const TemplateManagement = () => {
   const [templates, setTemplates] = useState([]);
   const [programs, setPrograms] = useState([]);

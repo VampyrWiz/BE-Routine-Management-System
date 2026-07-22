@@ -1,8 +1,10 @@
+/** Service for fetching and caching time slot data by timing type. */
 import { timeSlotsAPI } from './api';
 import { isEvenSemesterGroup } from '../contexts/SemesterGroupContext';
 
+/** Service for fetching time slots with proper timing-context resolution. */
 export const timingService = {
-  // Get time slots with appropriate timing context
+  /** Fetch time slots based on program, semester, and timing type. */
   async getTimeSlotsForContext(programCode, semester, section, timingType = 'summer') {
     try {
       const response = await timeSlotsAPI.getTimeSlots({

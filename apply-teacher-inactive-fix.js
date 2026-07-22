@@ -1,3 +1,18 @@
+/**
+ * Migration script that backports the `isActive: true` filter onto every
+ * Teacher `find()` call across the codebase. This ensures that deactivated
+ * (soft-deleted) teachers are excluded from routine slot queries, PDF
+ * generation, and analytics.
+ *
+ * It performs string replacements on the following files:
+ *   - routineSlotController.js
+ *   - UnifiedPDFService.js
+ *   - PDFRoutineService_OLD.js
+ *   - analyticsService.js
+ *
+ * Usage: node apply-teacher-inactive-fix.js
+ */
+
 const fs = require('fs');
 const path = require('path');
 

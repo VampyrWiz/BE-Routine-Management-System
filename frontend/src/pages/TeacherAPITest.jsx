@@ -1,3 +1,4 @@
+/** Developer page for testing teacher-related API endpoints. */
 import React, { useState } from 'react';
 import { Card, Button, Space, Typography, Alert, Spin, Select, Divider } from 'antd';
 import { ApiOutlined, UserOutlined, PlayCircleOutlined, FileTextOutlined } from '@ant-design/icons';
@@ -11,6 +12,7 @@ const { Option } = Select;
  * Teacher API Test Page
  * For testing teacher-related API endpoints
  */
+/** Developer test page for verifying teacher API endpoints. */
 const TeacherAPITest = () => {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [testResults, setTestResults] = useState({});

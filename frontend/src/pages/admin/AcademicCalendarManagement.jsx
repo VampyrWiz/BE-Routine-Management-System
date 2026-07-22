@@ -1,3 +1,4 @@
+/** Admin CRUD for academic calendar events. */
 import React, { useState, useCallback } from 'react';
 import { 
   Card, 
@@ -42,6 +43,7 @@ import dayjs from 'dayjs';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+/** Admin page for managing academic calendar events (holidays, events). */
 const AcademicCalendarManagement = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingCalendar, setEditingCalendar] = useState(null);

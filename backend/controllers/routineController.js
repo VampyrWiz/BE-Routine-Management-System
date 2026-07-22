@@ -1,3 +1,17 @@
+/**
+ * Routine Controller
+ *
+ * Core controller for the routine management system.  Handles CRUD for
+ * individual class assignments (including multi-period spanned classes),
+ * conflict detection, room/teacher availability checks, elective class
+ * scheduling (cross-section), PDF export, and vacancy analytics for
+ * both rooms and teachers.
+ *
+ * Semester-group awareness: routines for odd + even semesters can
+ * coexist in the same time slot because they are taught to different
+ * student cohorts; conflict detection only flags overlaps within the
+ * same semester group.
+ */
 const mongoose = require('mongoose');
 const Program = require('../models/Program');
 const Subject = require('../models/Subject');
@@ -19,7 +33,17 @@ const { evaluateWorkload } = require('../utils/teacherWorkload');
 // Excel utilities have been removed
 
 
-// Enhanced validation helper functions
+// ---------------------------------------------------------------------------
+//  Validation Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Comprehensive validation for class-assignment data.  Checks every
+ * required field's type / range, verifies all referenced DB documents
+ * exist (program, subject, teachers, room, time-slot), and flags
+ * business-rule issues such as a non-lab room used for a practical.
+ * For BREAK class types only program and time-slot are validated.
+ */
 const validateAssignClassData = async (data) => {
   const errors = [];
   const { programCode, semester, section, dayIndex, slotIndex, subjectId, teacherIds, roomId, classType, labGroup } = data;
@@ -153,7 +177,12 @@ const validateAssignClassData = async (data) => {
   return errors;
 };
 
-// Helper function to determine if two semesters are in the same group
+/**
+ * Determine whether two semester numbers belong to the same "group"
+ * (e.g. 1 & 2 → Group 1, 3 & 4 → Group 2, …).  Classes from different
+ * groups are allowed to overlap in the same room/slot because they are
+ * taught to entirely separate student cohorts.
+ */
 const areSemestersInSameGroup = (semester1, semester2) => {
   // Use custom semester grouping logic
   return getSemesterGroupName(semester1) === getSemesterGroupName(semester2);
@@ -164,9 +193,17 @@ const areSemestersInSameGroup = (semester1, semester2) => {
 // Enhanced conflict detection with semester group awareness
 
 
-// @desc    Get routine for specific program/semester/section
-// @route   GET /api/routines/:programCode/:semester/:section
-// @access  Public
+/**
+ * @desc    Get routine for a specific program/semester/section
+ * @route   GET /api/routines/:programCode/:semester/:section
+ * @access  Public
+ *
+ * Fetches all active RoutineSlot documents for the given combination,
+ * structures them into a day×slot grid for the frontend timetable
+ * component.  Handles multi-period (spanned) classes by collecting all
+ * slot indexes under the same spanId, and supports parallel elective
+ * subject/teacher pairs.
+ */
 exports.getRoutine = async (req, res) => {
   try {
     const { programCode, semester, section } = req.params;
@@ -325,9 +362,19 @@ exports.getRoutine = async (req, res) => {
   }
 };
 
-// @desc    Enhanced assign class to routine slot with comprehensive validation
-// @route   POST /api/routines/:programCode/:semester/:section/assign
-// @access  Private/Admin
+/**
+ * @desc    Assign a class to a routine slot (create or update)
+ * @route   POST /api/routines/:programCode/:semester/:section/assign
+ * @access  Private/Admin
+ *
+ * Validates input, runs the advanced conflict-detection service, checks
+ * teacher weekly workload limits, then creates or updates the
+ * RoutineSlot record.  Handles single-period lab groups (defaulting to
+ * 'ALL' if not specified), elective classes, and alternative-week
+ * patterns.  A forceAssign flag bypasses conflict rejection.  On
+ * success, publishes a queue message to regenerate affected teacher
+ * schedules.
+ */
 exports.assignClass = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -813,9 +860,17 @@ exports.assignClass = async (req, res) => {
   }
 };
 
-// @desc    Assign class spanning multiple slots
-// @route   POST /api/routines/assign-class-spanned
-// @access  Private/Admin
+/**
+ * @desc    Assign a multi-period (spanned) class across consecutive slots
+ * @route   POST /api/routines/assign-class-spanned
+ * @access  Private/Admin
+ *
+ * Creates a set of RoutineSlot entries linked by a common spanId for
+ * classes that occupy several consecutive time slots (e.g. a 3-hour
+ * lab).  Supports both single-group and "bothGroups" lab splits,
+ * updating existing spanned classes via the isUpdate/spanId fields.
+ * Uses a MongoDB transaction for atomicity when available.
+ */
 exports.assignClassSpanned = async (req, res) => {
   
   const errors = validationResult(req);
@@ -1602,9 +1657,16 @@ exports.assignClassSpanned = async (req, res) => {
   }
 };
 
-// @desc    Clear class from routine slot
-// @route   DELETE /api/routines/:programCode/:semester/:section/clear
-// @access  Private/Admin
+/**
+ * @desc    Delete a single class from a routine slot (hard delete)
+ * @route   DELETE /api/routines/:programCode/:semester/:section/clear
+ * @access  Private/Admin
+ *
+ * Accepts either a direct slotId or positional identifiers (dayIndex,
+ * slotIndex, optional labGroup) to locate and hard-delete the slot.
+ * Publishes a queue message with affected teacher IDs so cached
+ * schedules are regenerated.
+ */
 exports.clearClass = async (req, res) => {
   try {
     const { programCode, semester, section } = req.params;
@@ -1707,9 +1769,14 @@ exports.clearClass = async (req, res) => {
   }
 };
 
-// @desc    Clear entire weekly routine for a section
-// @route   DELETE /api/routines/:programCode/:semester/:section/clear-all
-// @access  Private/Admin
+/**
+ * @desc    Clear the entire weekly routine for a section
+ * @route   DELETE /api/routines/:programCode/:semester/:section/clear-all
+ * @access  Private/Admin
+ *
+ * Hard-deletes every RoutineSlot matching the program/semester/section
+ * and triggers teacher-schedule regeneration for all affected teachers.
+ */
 exports.clearEntireRoutine = async (req, res) => {
   try {
     const { programCode, semester, section } = req.params;
@@ -1798,9 +1865,15 @@ exports.clearEntireRoutine = async (req, res) => {
 };
 
 
-// @desc    Get all routines for a program
-// @route   GET /api/routines/:programCode
-// @access  Public
+/**
+ * @desc    Get all routine data for a program (grouped by semester/section)
+ * @route   GET /api/routines/:programCode
+ * @access  Public
+ *
+ * Fetches every active slot for the program and groups the result by
+ * "semester-section" keys so the frontend can render a quick overview
+ * of all sections in one call.
+ */
 exports.getProgramRoutines = async (req, res) => {
   try {
     const { programCode } = req.params;
@@ -1854,9 +1927,16 @@ exports.getProgramRoutines = async (req, res) => {
   }
 };
 
-// @desc    Check room availability
-// @route   GET /api/routines/rooms/:roomId/availability
-// @access  Public
+/**
+ * @desc    Check whether a room is free at a given day/slot
+ * @route   GET /api/routines/rooms/:roomId/availability
+ * @access  Public
+ *
+ * Verifies both direct slot matches and spanned-class overlaps.  Takes
+ * semester-group awareness into account: two classes from different
+ * groups may safely share the same room in the same slot.  Supports
+ * excludeSlotId / excludeSpanId for self-exclusion during edits.
+ */
 exports.checkRoomAvailability = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -1978,9 +2058,16 @@ exports.checkRoomAvailability = async (req, res) => {
   }
 };
 
-// @desc    Export routine to PDF
-// @route   GET /api/routines/:programCode/:semester/:section/export-pdf
-// @access  Public
+/**
+ * @desc    Export a class routine timetable as a PDF download
+ * @route   GET /api/routines/:programCode/:semester/:section/export-pdf
+ * @access  Public
+ *
+ * Generates a PDF via PDFRoutineService.  The format parameter controls
+ * whether the response is an inline preview or an attachment download.
+ * Optional startDate / endDate query parameters scope the PDF to a
+ * date range.
+ */
 exports.exportRoutineToPDF = async (req, res) => {
   try {
     const { programCode, semester, section } = req.params;
@@ -2033,9 +2120,11 @@ exports.exportRoutineToPDF = async (req, res) => {
   }
 };
 
-// @desc    Export all routines for a semester to PDF
-// @route   GET /api/routines/:programCode/semester/:semester/export-pdf-all
-// @access  Public
+/**
+ * @desc    Export all sections' routines for a semester as a combined PDF
+ * @route   GET /api/routines/:programCode/semester/:semester/export-pdf-all
+ * @access  Public
+ */
 exports.exportAllSemesterRoutinesToPDF = async (req, res) => {
   try {
     const { programCode, semester } = req.params;
@@ -2086,9 +2175,11 @@ exports.exportAllSemesterRoutinesToPDF = async (req, res) => {
   }
 };
 
-// @desc    Export routine to Excel (STUB - Excel functionality removed)
-// @route   GET /api/routines/:programCode/:semester/:section/export
-// @access  Public
+/**
+ * @desc    (STUB) Export routine to Excel – always returns "disabled"
+ * @route   GET /api/routines/:programCode/:semester/:section/export
+ * @access  Public
+ */
 exports.exportRoutineToExcel = async (req, res) => {
   try {
     const { programCode, semester, section } = req.params;
@@ -2117,9 +2208,11 @@ exports.exportRoutineToExcel = async (req, res) => {
   }
 };
 
-// @desc    Import routine from Excel file for specific program/semester/section
-// @route   POST /api/routines/:programCode/:semester/:section/import
-// @access  Private/Admin
+/**
+ * @desc    (STUB) Import routine from Excel – always returns "disabled"
+ * @route   POST /api/routines/:programCode/:semester/:section/import
+ * @access  Private/Admin
+ */
 exports.importRoutineFromExcel = async (req, res) => {
   try {
     
@@ -2155,9 +2248,11 @@ exports.importRoutineFromExcel = async (req, res) => {
   }
 };
 
-// @desc    Validate uploaded routine Excel file
-// @route   POST /api/routines/import/validate
-// @access  Private/Admin
+/**
+ * @desc    (STUB) Validate an uploaded Excel routine file
+ * @route   POST /api/routines/import/validate
+ * @access  Private/Admin
+ */
 exports.validateRoutineImport = [
   async (req, res) => {
     try {
@@ -2178,9 +2273,11 @@ exports.validateRoutineImport = [
   }
 ];
 
-// @desc    Download Excel import template
-// @route   GET /api/routines/import/template
-// @access  Public
+/**
+ * @desc    (STUB) Download Excel import template – always returns "disabled"
+ * @route   GET /api/routines/import/template
+ * @access  Public
+ */
 exports.downloadImportTemplate = async (req, res) => {
   try {
     
@@ -2199,7 +2296,15 @@ exports.downloadImportTemplate = async (req, res) => {
   }
 };
 
-// Clear a span group (multi-period class)
+/**
+ * @desc    Delete an entire multi-period (span) group by spanId
+ * @route   DELETE /api/routines/span/:spanId
+ * @access  Private/Admin
+ *
+ * Hard-deletes every RoutineSlot sharing the given spanId.  Collects
+ * all affected teacher IDs before deletion and publishes a queue
+ * message for cache regeneration.
+ */
 exports.clearSpanGroup = async (req, res) => {
   const { spanId } = req.params;
 
@@ -2286,9 +2391,15 @@ exports.clearSpanGroup = async (req, res) => {
   }
 };
 
-// @desc    Check teacher availability
-// @route   GET /api/routines/teachers/:teacherId/availability
-// @access  Public
+/**
+ * @desc    Check whether a teacher is free at a given day/slot
+ * @route   GET /api/routines/teachers/:teacherId/availability
+ * @access  Public
+ *
+ * Mirrors the logic of checkRoomAvailability but for teachers: checks
+ * direct slot conflicts and spanned-class overlaps, filtered by
+ * semester group.  Supports excludeSlotId / excludeSpanId for edits.
+ */
 exports.checkTeacherAvailability = async (req, res) => {
   try {
     const { teacherId } = req.params;
@@ -2449,9 +2560,14 @@ exports.checkTeacherAvailability = async (req, res) => {
   }
 };
 
-// @desc    Get available subjects for assignment
-// @route   GET /api/routines/:programCode/:semester/subjects
-// @access  Public
+/**
+ * @desc    Get subjects available for assignment in a program/semester
+ * @route   GET /api/routines/:programCode/:semester/subjects
+ * @access  Public
+ *
+ * Reads the ProgramSemester curriculum document to return the list of
+ * subjects offered, including course type and elective flags.
+ */
 exports.getAvailableSubjects = async (req, res) => {
   try {
     const { programCode, semester } = req.params;
@@ -2499,9 +2615,15 @@ exports.getAvailableSubjects = async (req, res) => {
 // All related functions (getTeacherSchedule and exportTeacherScheduleToExcel) have been moved
 // to maintain proper separation of concerns and avoid duplicate code.
 
-// @desc    Analyze schedule conflicts without creating a slot
-// @route   POST /api/routines/conflicts/analyze
-// @access  Private/Admin
+/**
+ * @desc    Analyse potential schedule conflicts without persisting a slot
+ * @route   POST /api/routines/conflicts/analyze
+ * @access  Private/Admin
+ *
+ * Runs the ConflictDetectionService on the supplied slot data and
+ * returns a structured report with conflict details and actionable
+ * recommendations.  Useful for "what-if" scenarios in the UI.
+ */
 exports.analyzeScheduleConflicts = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -2607,9 +2729,17 @@ exports.analyzeScheduleConflicts = async (req, res) => {
   }
 };
 
-// @desc    Create unified elective routine for 7th/8th semester
-// @route   POST /api/routines/electives/schedule
-// @access  Private/Admin
+/**
+ * @desc    Schedule a cross-section elective class (7th/8th semesters only)
+ * @route   POST /api/routines/electives/schedule
+ * @access  Private/Admin
+ *
+ * Creates RoutineSlot entries for both AB and CD sections at the same
+ * day/slot so students from both sections attend the elective together.
+ * Validates semester (only 7 & 8), runs conflict detection, and stores
+ * elective-specific metadata (elective number, type, student
+ * composition).
+ */
 exports.scheduleElectiveClass = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -2813,9 +2943,16 @@ exports.scheduleElectiveClass = async (req, res) => {
   }
 };
 
-// @desc    Create unified elective routine for 7th/8th semester spanning multiple periods
-// @route   POST /api/routines/electives/schedule-spanned
-// @access  Private/Admin
+/**
+ * @desc    Schedule a multi-period cross-section elective class
+ * @route   POST /api/routines/electives/schedule-spanned
+ * @access  Private/Admin
+ *
+ * Extends scheduleElectiveClass to multi-period (spanned) electives.
+ * Creates routine slots linked by a spanId for both AB and CD sections
+ * across the requested slot indexes.  Uses a MongoDB transaction when
+ * available.
+ */
 exports.scheduleElectiveClassSpanned = async (req, res) => {
   
   const errors = validationResult(req);
@@ -3187,9 +3324,16 @@ exports.scheduleElectiveClassSpanned = async (req, res) => {
   }
 };
 
-// @desc    Get unified section routine (includes electives)
-// @route   GET /api/routines/section/:programCode/:semester/:section
-// @access  Private
+/**
+ * @desc    Get a unified section routine (core + cross-section electives)
+ * @route   GET /api/routines/section/:programCode/:semester/:section
+ * @access  Private
+ *
+ * Returns both core and elective classes for a section, with elective
+ * metadata (student composition, display options) so the frontend can
+ * render a combined timetable showing which electives the section
+ * participates in.
+ */
 exports.getUnifiedSectionRoutine = async (req, res) => {
   try {
     const { programCode, semester, section } = req.params;
@@ -3287,9 +3431,15 @@ exports.getUnifiedSectionRoutine = async (req, res) => {
   }
 };
 
-// @desc    Get elective conflicts for scheduling
-// @route   POST /api/routines/electives/conflicts
-// @access  Private/Admin
+/**
+ * @desc    Check for conflicts between proposed elective slots
+ * @route   POST /api/routines/electives/conflicts
+ * @access  Private/Admin
+ *
+ * Analyses an array of proposed elective assignments for time, teacher,
+ * and room collisions, and also checks whether any elective would
+ * overlap with existing core classes for the given program/semester.
+ */
 exports.checkElectiveConflicts = async (req, res) => {
   try {
     const {
@@ -3399,7 +3549,11 @@ exports.checkElectiveConflicts = async (req, res) => {
   }
 };
 
-// Helper function to format unified routine for display
+/**
+ * Format a set of routine slots (core + elective) into a day-keyed
+ * structure suitable for frontend rendering.  Elective entries carry
+ * additional display metadata (student composition, highlight flags).
+ */
 function formatUnifiedRoutineForDisplay(routineSlots, section) {
   const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const routine = {};
@@ -3452,7 +3606,10 @@ function formatUnifiedRoutineForDisplay(routineSlots, section) {
   return routine;
 }
 
-// Helper function to generate elective recommendations
+/**
+ * Generate human-readable recommendations based on the set of elective
+ * conflicts detected during checkElectiveConflicts.
+ */
 function generateElectiveRecommendations(conflicts) {
   const recommendations = [];
   
@@ -3481,15 +3638,25 @@ function generateElectiveRecommendations(conflicts) {
 
 // Helper function removed - now using dynamic sectionUtils.getLabGroupsForSection()
 
-// Helper function to get section-appropriate lab group label
+/**
+ * Map a lab group identifier (A/B/C/D) to a display label appropriate
+ * for the given section (AB → A/B, CD → C/D).  Delegates to the
+ * shared sectionUtils function.
+ */
 const getSectionLabGroupLabel_LOCAL = (labGroup, section) => {
   // Use the imported function from sectionUtils
   return getSectionLabGroupLabel(labGroup, section, { includeParentheses: false });
 };
 
-// @desc    Get room schedule/routine
-// @route   GET /api/rooms/:roomId/schedule
-// @access  Private
+/**
+ * @desc    Get a room's full weekly schedule
+ * @route   GET /api/rooms/:roomId/schedule
+ * @access  Private
+ *
+ * Builds a day×slot grid of all classes assigned to the room, matching
+ * the same structure used by the class-routine endpoint.  Includes
+ * utilisation statistics (busy days, peak/quiet day, utilisation rate).
+ */
 exports.getRoomSchedule = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -3654,9 +3821,15 @@ exports.getRoomSchedule = async (req, res) => {
   }
 };
 
-// @desc    Get vacant rooms for a specific day and time slot
-// @route   GET /api/routines/rooms/vacant
-// @access  Public
+/**
+ * @desc    Find vacant rooms for a given day/time-slot
+ * @route   GET /api/routines/rooms/vacant
+ * @access  Public
+ *
+ * Compares all active rooms against the occupied-room set at the
+ * requested day+slot.  Supports filtering by room type, building,
+ * and minimum capacity.
+ */
 exports.getVacantRooms = async (req, res) => {
   try {
     const { dayIndex, slotIndex, academicYear, roomType, building, minCapacity } = req.query;
@@ -3790,9 +3963,15 @@ exports.getVacantRooms = async (req, res) => {
   }
 };
 
-// @desc    Get room vacancy status for an entire day
-// @route   GET /api/routines/rooms/vacant/day
-// @access  Public
+/**
+ * @desc    Get room-by-room vacancy status for an entire day
+ * @route   GET /api/routines/rooms/vacant/day
+ * @access  Public
+ *
+ * For each room, shows which slots are free and which are occupied
+ * across the given day.  Includes per-room and overall utilisation
+ * statistics.
+ */
 exports.getRoomVacancyForDay = async (req, res) => {
   try {
     const { dayIndex, academicYear, roomType, building, minCapacity } = req.query;
@@ -3961,9 +4140,15 @@ exports.getRoomVacancyForDay = async (req, res) => {
   }
 };
 
-// @desc    Get rooms with highest vacancy rates
-// @route   GET /api/routines/rooms/vacant/analytics
-// @access  Public
+/**
+ * @desc    Get room vacancy analytics and rankings
+ * @route   GET /api/routines/rooms/vacant/analytics
+ * @access  Public
+ *
+ * Computes weekly utilisation/vacancy rates for every room, identifies
+ * the most/least utilised rooms, and provides day-wise distribution.
+ * Supports sorting by vacancy, utilisation, capacity, or name.
+ */
 exports.getRoomVacancyAnalytics = async (req, res) => {
   try {
     const { academicYear, roomType, building, minCapacity, sortBy = 'vacancy' } = req.query;
@@ -4140,7 +4325,10 @@ exports.getRoomVacancyAnalytics = async (req, res) => {
   }
 };
 
-// Helper function to find peak utilization day for room
+/**
+ * Identify the day of the week with the highest number of classes
+ * scheduled for a given room's routine data.
+ */
 function getPeakUtilizationDay(routine) {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   let maxClasses = 0;
@@ -4157,7 +4345,10 @@ function getPeakUtilizationDay(routine) {
   return { day: peakDay, classCount: maxClasses };
 }
 
-// Helper function to find quietest day for room
+/**
+ * Identify the day of the week with the fewest classes scheduled for a
+ * given room's routine data (or 0 if the room has no classes).
+ */
 function getQuietUtilizationDay(routine) {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   let minClasses = Infinity;
@@ -4174,9 +4365,14 @@ function getQuietUtilizationDay(routine) {
   return { day: quietDay, classCount: minClasses === Infinity ? 0 : minClasses };
 }
 
-// @desc    Get vacant teachers for a specific day and time slot
-// @route   GET /api/routines/teachers/vacant
-// @access  Public
+/**
+ * @desc    Find teachers who are free at a given day/time-slot
+ * @route   GET /api/routines/teachers/vacant
+ * @access  Public
+ *
+ * Compares all active teachers (optionally filtered by department or
+ * designation) against the occupied-teacher set at the requested slot.
+ */
 exports.getVacantTeachers = async (req, res) => {
   try {
     const { dayIndex, slotIndex, academicYear, department, designation } = req.query;
@@ -4296,13 +4492,17 @@ exports.getVacantTeachers = async (req, res) => {
   }
 };
 
-// =====================================
-// PDF EXPORT METHODS (using working PDFRoutineService)
-// =====================================
+// ---------------------------------------------------------------------------
+//  PDF Export Methods (using PDFRoutineService)
+// ---------------------------------------------------------------------------
 
 /**
- * Export teacher schedule to PDF
- * @route GET /routines/teacher/:teacherId/export-pdf
+ * @desc    Export a single teacher's schedule to PDF
+ * @route   GET /routines/teacher/:teacherId/export-pdf
+ * @access  Public
+ *
+ * Generates a PDF timetable showing all classes assigned to the given
+ * teacher for the selected semester group (or all groups).
  */
 exports.exportTeacherScheduleToPDF = async (req, res) => {
   try {
@@ -4358,8 +4558,9 @@ exports.exportTeacherScheduleToPDF = async (req, res) => {
 };
 
 /**
- * Export all teachers schedules to PDF
- * @route GET /routines/teachers/export-pdf
+ * @desc    Export schedules for every teacher to a single PDF
+ * @route   GET /routines/teachers/export-pdf
+ * @access  Public
  */
 exports.exportAllTeachersSchedulesToPDF = async (req, res) => {
   try {
@@ -4393,8 +4594,9 @@ exports.exportAllTeachersSchedulesToPDF = async (req, res) => {
 };
 
 /**
- * Export room schedule to PDF
- * @route GET /routines/room/:roomId/export-pdf
+ * @desc    Export a single room's schedule to PDF
+ * @route   GET /routines/room/:roomId/export-pdf
+ * @access  Public
  */
 exports.exportRoomScheduleToPDF = async (req, res) => {
   try {
@@ -4445,8 +4647,9 @@ exports.exportRoomScheduleToPDF = async (req, res) => {
 };
 
 /**
- * Export all room schedules to PDF
- * @route GET /routines/rooms/export-pdf
+ * @desc    Export schedules for every room to a single PDF
+ * @route   GET /routines/rooms/export-pdf
+ * @access  Public
  */
 exports.exportAllRoomSchedulesToPDF = async (req, res) => {
   try {

@@ -1,3 +1,4 @@
+/** Admin CRUD for system users (admin accounts). */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -43,6 +44,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
 
+/** Admin CRUD for system users/admin accounts. */
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);

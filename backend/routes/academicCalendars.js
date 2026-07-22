@@ -1,3 +1,11 @@
+/**
+ * Academic Calendars
+ *
+ * Manages academic year/calendar definitions including Nepali/English year
+ * ranges, term breakdowns, and current week tracking. Used by the scheduling
+ * system to determine which academic year is active and which week is current.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');

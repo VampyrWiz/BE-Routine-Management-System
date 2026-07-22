@@ -1,3 +1,12 @@
+/**
+ * Lab Groups
+ *
+ * Manages laboratory group configurations for practical sessions within
+ * sections. Defines group names, student counts, and week patterns
+ * (odd/even/weekly). Provides auto-creation of lab groups based on
+ * program and semester data.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');

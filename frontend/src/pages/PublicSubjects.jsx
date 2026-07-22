@@ -1,3 +1,4 @@
+/** Public view of subjects with search/filter capabilities. */
 import React, { useState, useMemo, useCallback } from 'react';
 import { subjectsAPI } from '../services/api';
 import { useFilters, useFilteredData } from '../hooks/useFilters';
@@ -28,6 +29,7 @@ import { programsAPI } from '../services/api';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+/** Public subjects listing with search, filter, and semester/group selection. */
 const PublicSubjects = () => {
   // Initialize filters
   const {

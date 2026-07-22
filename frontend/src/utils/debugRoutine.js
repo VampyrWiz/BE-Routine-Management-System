@@ -12,6 +12,7 @@
  */
 
 // Helper to create a direct API request to bypass React Query caching
+/** Debug: fetch a teacher's schedule directly from the API. */
 export const fetchTeacherScheduleDirectly = async (teacherId) => {
   try {
     console.log(`🔍 Direct API request for teacher ${teacherId} schedule...`);
@@ -37,6 +38,7 @@ export const fetchTeacherScheduleDirectly = async (teacherId) => {
 };
 
 // Helper to create a direct API request to bypass React Query caching
+/** Debug: fetch a room's schedule directly from the API. */
 export const fetchRoomScheduleDirectly = async (roomId) => {
   try {
     console.log(`🔍 Direct API request for room ${roomId} schedule...`);
@@ -62,6 +64,7 @@ export const fetchRoomScheduleDirectly = async (roomId) => {
 };
 
 // Helper to flush React Query cache in browser console
+/** Debug: clear all React Query caches to force a full refetch. */
 export const flushAllCaches = (queryClient) => {
   if (!queryClient) {
     console.error('❌ QueryClient not provided to flushAllCaches');

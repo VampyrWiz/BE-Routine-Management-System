@@ -1,3 +1,8 @@
+/**
+ * Root application component with routing, authentication, and theme providers.
+ * Lazy-loads most pages for performance.
+ * @module App
+ */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -39,7 +44,7 @@ const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
 const TemplateManagement = lazy(() => import('./pages/admin/TemplateManagement'));
 const RoomVacancyAnalysis = lazy(() => import('./pages/admin/RoomVacancyAnalysis'));
 
-// Loading component for Suspense
+/** Full-page loading spinner shown while lazy chunks are fetched. */
 const PageLoader = () => (
   <div style={{ 
     display: 'flex', 
@@ -54,7 +59,7 @@ const PageLoader = () => (
   </div>
 );
 
-// Protected route component
+/** Route guard that redirects unauthenticated users to /admin/login. */
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { token, user, isInitialized } = useAuthStore();
   
@@ -74,7 +79,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   return children;
 };
 
-// Create a client outside of the component to prevent recreation on re-renders
+/** React Query client with retry/backoff/stale config shared across all pages. */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -120,6 +125,7 @@ const queryClient = new QueryClient({
     },
   },
 });
+/** Root component that sets up QueryClient, antd theme, router, and all routes. */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>

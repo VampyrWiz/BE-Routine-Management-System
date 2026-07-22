@@ -1,3 +1,11 @@
+/**
+ * Authentication
+ *
+ * Handles user login with email/password credentials and returns JWT tokens.
+ * Also provides the /me endpoint to retrieve the currently authenticated
+ * user's profile.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { loginUser, getMe } = require('../controllers/authController');

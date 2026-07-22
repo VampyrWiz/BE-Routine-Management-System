@@ -1,3 +1,12 @@
+/**
+ * Routine Scheduling (Core)
+ *
+ * The central scheduling module. Handles class assignments (single-slot and
+ * multi-slot spanning), elective scheduling, conflict analysis, room/teacher
+ * availability checks, and PDF exports for routines, teacher schedules,
+ * and room schedules.
+ */
+
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');

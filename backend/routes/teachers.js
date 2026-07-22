@@ -1,3 +1,11 @@
+/**
+ * Teachers
+ *
+ * CRUD operations for teacher profiles including bulk creation and soft/hard
+ * deletion. Provides individual teacher schedule retrieval, a multi-teacher
+ * meeting scheduler, and schedule export functionality.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');

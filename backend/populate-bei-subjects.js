@@ -1,3 +1,15 @@
+/**
+ * Script to populate BEI (Bachelor in Electronics and Information Engineering)
+ * subjects into the database. Deletes any existing BEI subjects for all 8
+ * semesters, then inserts a fresh set of subjects covering the full curriculum
+ * including core courses, electives, and project work.
+ *
+ * CAUTION: This script uses a hardcoded MongoDB Atlas connection string and
+ * a hardcoded BEI program ObjectId. Update these before running in production.
+ *
+ * Usage: node backend/populate-bei-subjects.js
+ */
+
 const mongoose = require('mongoose');
 const Subject = require('./models/Subject');
 const Program = require('./models/Program');
@@ -8,6 +20,12 @@ mongoose.connect('mongodb+srv://079bct044manish:routine@routine.mrjj7ho.mongodb.
   useUnifiedTopology: true,
 });
 
+/**
+ * Deletes all existing BEI subjects for semesters 1–8, then creates
+ * subjects from the hardcoded beiSubjects array. Each subject carries
+ * metadata such as credits, weekly hours, lab requirements, and preferred
+ * room types. Prints creation status per subject and a semester-wise summary.
+ */
 const populateBEISubjects = async () => {
   try {
     // Use the provided BEI program _id directly

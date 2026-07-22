@@ -1,3 +1,4 @@
+/** Admin page for detecting scheduling conflicts (room/time collisions). */
 import React, { useState, useCallback } from 'react';
 import { 
   Card, 
@@ -39,6 +40,7 @@ import { conflictsAPI } from '../../services/api';
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
+/** Page to detect and display scheduling conflicts (room/time double-booking). */
 const ConflictDetection = () => {
   const [selectedConflict, setSelectedConflict] = useState(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);

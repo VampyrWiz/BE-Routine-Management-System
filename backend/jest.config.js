@@ -1,3 +1,12 @@
+/**
+ * Jest configuration for the backend test suite.
+ *
+ * - Targets the comprehensive backend test file only.
+ * - Enables code coverage for controllers, models, routes, and utils.
+ * - Uses `__tests__/setup.js` for global test lifecycle hooks.
+ * - Forces exit after test completion to handle lingering handles.
+ */
+
 module.exports = {
   testEnvironment: 'node',
   testMatch: [

@@ -1,12 +1,26 @@
+/**
+ * Routine Slot Controller
+ *
+ * Thin CRUD controller around the RoutineSlot model.  Every entry in this
+ * collection represents one atomic class-period assignment (subject +
+ * teacher + room for a given day/slot).  Creation and update hooks into a
+ * conflict-detection service to prevent double-booking.
+ */
 const RoutineSlot = require('../models/RoutineSlot');
 const RoutineSlotNew = require('../models/RoutineSlotNew');
 const { validationResult } = require('express-validator');
 const conflictDetection = require('../services/conflictDetection');
 const mongoose = require('mongoose');
 
-// @desc    Create a new routine slot
-// @route   POST /api/routine-slots
-// @access  Private/Admin
+/**
+ * @desc    Create a new routine slot
+ * @route   POST /api/routine-slots
+ * @access  Private/Admin
+ *
+ * Validates the request body via express-validator, runs the conflict-
+ * detection service, and if no conflicts are found persists the new slot
+ * with all reference fields populated in the response.
+ */
 exports.createRoutineSlot = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -43,9 +57,15 @@ exports.createRoutineSlot = async (req, res) => {
   }
 };
 
-// @desc    Get all routine slots
-// @route   GET /api/routine-slots
-// @access  Private
+/**
+ * @desc    Get all routine slots
+ * @route   GET /api/routine-slots
+ * @access  Private
+ *
+ * Supports filtering by academicYearId, programId, semester, section,
+ * dayIndex, teacherId, roomId and isActive.  All reference fields are
+ * populated to avoid additional client-side lookups.
+ */
 exports.getRoutineSlots = async (req, res) => {
   try {
     const {
@@ -92,9 +112,14 @@ exports.getRoutineSlots = async (req, res) => {
   }
 };
 
-// @desc    Get routine slot by ID
-// @route   GET /api/routine-slots/:id
-// @access  Private
+/**
+ * @desc    Get routine slot by ID
+ * @route   GET /api/routine-slots/:id
+ * @access  Private
+ *
+ * Fetches a single slot with full population including lab-group and
+ * elective references.  Returns 404 if the slot does not exist.
+ */
 exports.getRoutineSlotById = async (req, res) => {
   try {
     const routineSlot = await RoutineSlot.findById(req.params.id)
@@ -122,9 +147,15 @@ exports.getRoutineSlotById = async (req, res) => {
   }
 };
 
-// @desc    Update routine slot
-// @route   PUT /api/routine-slots/:id
-// @access  Private/Admin
+/**
+ * @desc    Update routine slot
+ * @route   PUT /api/routine-slots/:id
+ * @access  Private/Admin
+ *
+ * Temporarily deactivates the slot, runs conflict detection against the
+ * new data (so the slot itself is not flagged as a self-conflict), then
+ * re-activates it.  If no conflicts are found the update is persisted.
+ */
 exports.updateRoutineSlot = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -181,9 +212,14 @@ exports.updateRoutineSlot = async (req, res) => {
   }
 };
 
-// @desc    Delete routine slot (hard delete - completely removes from database)
-// @route   DELETE /api/routine-slots/:id
-// @access  Private/Admin
+/**
+ * @desc    Delete routine slot (hard delete - completely removes from database)
+ * @route   DELETE /api/routine-slots/:id
+ * @access  Private/Admin
+ *
+ * Removes the slot document entirely and publishes a queue message with
+ * the affected teacher IDs so their cached schedules can be regenerated.
+ */
 exports.deleteRoutineSlot = async (req, res) => {
   try {
     const routineSlot = await RoutineSlot.findById(req.params.id);
@@ -228,9 +264,15 @@ exports.deleteRoutineSlot = async (req, res) => {
   }
 };
 
-// @desc    Get weekly schedule
-// @route   GET /api/routine-slots/schedule/weekly
-// @access  Private
+/**
+ * @desc    Get weekly schedule
+ * @route   GET /api/routine-slots/schedule/weekly
+ * @access  Private
+ *
+ * Organises active slots into a day-indexed schedule (Sunday–Saturday)
+ * for a given program/semester/section.  Intended for a compact weekly
+ * timetable view.
+ */
 exports.getWeeklySchedule = async (req, res) => {
   try {
     const { academicYearId, programId, semester, year, section } = req.query;
@@ -280,9 +322,15 @@ exports.getWeeklySchedule = async (req, res) => {
   }
 };
 
-// @desc    Check for conflicts
-// @route   POST /api/routine-slots/check-conflicts
-// @access  Private/Admin
+/**
+ * @desc    Check for conflicts
+ * @route   POST /api/routine-slots/check-conflicts
+ * @access  Private/Admin
+ *
+ * Validates a prospective (or existing) slot against the conflict-
+ * detection service without persisting any data.  Used by the UI to
+ * preview conflicts before saving.
+ */
 exports.checkConflicts = async (req, res) => {
   try {
     const conflicts = await conflictDetection.checkSlotConflicts(req.body);
@@ -293,9 +341,15 @@ exports.checkConflicts = async (req, res) => {
   }
 };
 
-// @desc    Bulk create routine slots
-// @route   POST /api/routine-slots/bulk
-// @access  Private/Admin
+/**
+ * @desc    Bulk create routine slots
+ * @route   POST /api/routine-slots/bulk
+ * @access  Private/Admin
+ *
+ * Accepts an array of slot objects, runs conflict detection on each one,
+ * and creates only those that pass.  Returns a summary showing how many
+ * were created, how many failed, and how many had conflicts.
+ */
 exports.bulkCreateRoutineSlots = async (req, res) => {
   try {
     const { slots } = req.body;
@@ -351,9 +405,17 @@ exports.bulkCreateRoutineSlots = async (req, res) => {
   }
 };
 
-// @desc    Create an elective class with multiple subjects
-// @route   POST /api/routine-slots/elective
-// @access  Private/Admin
+/**
+ * @desc    Create an elective class with multiple subjects
+ * @route   POST /api/routine-slots/elective
+ * @access  Private/Admin
+ *
+ * Creates one (or multiple, for multi-period) routine slot(s) where a
+ * single time-slot hosts several subjects in parallel – each tied to its
+ * own teacher.  Used for the elective system where students from
+ * different sections choose different subjects that meet at the same
+ * hour.
+ */
 exports.createElectiveClass = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

@@ -1,6 +1,8 @@
 /**
- * Response Utilities
- * Helper functions for API responses
+ * Response Utilities — standardised API response helpers.
+ * Provides consistent success/error response formatting, pagination metadata,
+ * and an Express error-handling middleware that maps Mongoose validation,
+ * duplicate-key, and cast errors to appropriate HTTP status codes.
  */
 
 /**

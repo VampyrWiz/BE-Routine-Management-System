@@ -1,3 +1,4 @@
+/** Manager for selecting a teacher and viewing/exporting their routine grid. */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Select, Space, Typography, Alert, Spin, Button, Row, Col, Statistic, Tag, message } from 'antd';
 import { UserOutlined, ReloadOutlined, BookOutlined, CalendarOutlined, ClockCircleOutlined, TeamOutlined, DownloadOutlined, BugOutlined, ExperimentOutlined, ReadOutlined } from '@ant-design/icons';
@@ -17,6 +18,7 @@ const { Option } = Select;
  * Teacher Schedule Manager Component
  * Displays teacher schedules using the same Excel-like grid as class routines
  */
+/** Inner component: fetches and displays teacher schedule data. */
 const TeacherScheduleManagerContent = () => {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const queryClient = useQueryClient();
@@ -1264,6 +1266,7 @@ const TeacherScheduleManagerContent = () => {
 };
 
 // Main wrapper component with context provider
+/** Top-level teacher schedule manager: teacher selector + grid + PDF export. */
 const TeacherScheduleManager = () => {
   return (
     <SemesterGroupProvider>

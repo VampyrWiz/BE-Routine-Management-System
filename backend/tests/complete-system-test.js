@@ -1,6 +1,11 @@
 /**
- * Complete Backend System Test
- * This validates all major functionality works correctly
+ * Complete Backend System Test (Standalone runner)
+ *
+ * Alternative non-Jest integration test that exercises authentication,
+ * core CRUD APIs, time slot creation with cleanup, and data schema integrity.
+ *
+ * Designed to be run directly via `node complete-system-test.js` for quick
+ * smoke-testing without the Jest runner. Reports pass/fail with emoji output.
  */
 
 const axios = require('axios');
@@ -15,13 +20,15 @@ const adminCredentials = {
 
 let authToken = null;
 
-// Test results tracking
+// Tracks cumulative pass/fail counts and per-test entries for the final summary.
 const testResults = {
   passed: 0,
   failed: 0,
   tests: []
 };
 
+// Logs a single test result with an emoji indicator and appends it to the
+// testResults array for final reporting.
 function logTest(name, passed, details = '') {
   const status = passed ? '✅' : '❌';
   console.log(`${status} ${name}${details ? ': ' + details : ''}`);
@@ -30,7 +37,8 @@ function logTest(name, passed, details = '') {
   else testResults.failed++;
 }
 
-// Function to login
+// Authenticates with admin credentials and stores the JWT in the module-level
+// authToken variable. Returns true on success, false on failure.
 async function loginAsAdmin() {
   try {
     const response = await axios.post(`${API_BASE}/auth/login`, adminCredentials);
@@ -42,10 +50,13 @@ async function loginAsAdmin() {
 }
 
 // Test functions
+
+// Step 1: Verifies the health endpoint responds and admin login returns a token.
+// Aborts further testing if authentication fails.
 async function testAuthentication() {
   console.log('\n🔐 Testing Authentication...');
   
-  // Test health endpoint
+  // Checks that the /health endpoint returns status 200.
   try {
     const health = await axios.get(`${API_BASE}/health`);
     logTest('Health Check', health.status === 200);
@@ -53,7 +64,7 @@ async function testAuthentication() {
     logTest('Health Check', false, error.message);
   }
   
-  // Test login
+  // Attempts admin login; if it fails the test cannot proceed.
   const loginSuccess = await loginAsAdmin();
   logTest('Admin Login', loginSuccess);
   
@@ -65,12 +76,14 @@ async function testAuthentication() {
   return true;
 }
 
+// Step 2: Calls each major read-only endpoint (time-slots, teachers, subjects,
+// rooms, academic sessions) to confirm they respond with 200.
 async function testCoreAPIs() {
   console.log('\n📡 Testing Core APIs...');
   
   const headers = { 'Authorization': `Bearer ${authToken}` };
   
-  // Test Time Slots
+  // Fetches all time slots and logs the count.
   try {
     const timeSlots = await axios.get(`${API_BASE}/time-slots`, { headers });
     logTest('Time Slots API', timeSlots.status === 200, `Found ${timeSlots.data.length} time slots`);
@@ -78,7 +91,7 @@ async function testCoreAPIs() {
     logTest('Time Slots API', false, error.message);
   }
   
-  // Test Teachers
+  // Fetches all teachers and logs the count.
   try {
     const teachers = await axios.get(`${API_BASE}/teachers`, { headers });
     logTest('Teachers API', teachers.status === 200, `Found ${teachers.data.length} teachers`);
@@ -86,7 +99,7 @@ async function testCoreAPIs() {
     logTest('Teachers API', false, error.message);
   }
   
-  // Test Subjects
+  // Fetches all subjects and logs the count.
   try {
     const subjects = await axios.get(`${API_BASE}/subjects`, { headers });
     logTest('Subjects API', subjects.status === 200, `Found ${subjects.data.length} subjects`);
@@ -94,7 +107,7 @@ async function testCoreAPIs() {
     logTest('Subjects API', false, error.message);
   }
   
-  // Test Rooms
+  // Fetches rooms data (may return either array or object format).
   try {
     const rooms = await axios.get(`${API_BASE}/rooms`, { headers });
     logTest('Rooms API', rooms.status === 200, `Found rooms data`);
@@ -102,7 +115,7 @@ async function testCoreAPIs() {
     logTest('Rooms API', false, error.message);
   }
   
-  // Test Academic Sessions
+  // Fetches academic sessions from the admin endpoint.
   try {
     const sessions = await axios.get(`${API_BASE}/admin/sessions`, { headers });
     logTest('Academic Sessions API', sessions.status === 200);
@@ -111,12 +124,14 @@ async function testCoreAPIs() {
   }
 }
 
+// Step 3: Creates a new time slot via POST and then deletes it to verify the full
+// create/delete lifecycle. Handles duplicate-slot errors gracefully.
 async function testTimeSlotCreation() {
   console.log('\n⏰ Testing Time Slot Creation...');
   
   const headers = { 'Authorization': `Bearer ${authToken}` };
   
-  // Create a test time slot
+  // Sample time slot payload for the test.
   const testTimeSlot = {
     _id: 201,
     label: 'Test Period 201',
@@ -134,7 +149,7 @@ async function testTimeSlotCreation() {
     logTest('Time Slot Creation', response.status === 201 || response.status === 200, 
       `Created: ${response.data.label}`);
     
-    // Test cleanup - delete the test time slot
+    // Cleans up by deleting the slot that was just created.
     try {
       await axios.delete(`${API_BASE}/time-slots/${testTimeSlot._id}`, { headers });
       logTest('Time Slot Cleanup', true, 'Test slot deleted');
@@ -151,12 +166,14 @@ async function testTimeSlotCreation() {
   }
 }
 
+// Step 4: Validates that fetched records contain the expected required fields
+// (_id, label, shortName, etc.) to catch schema regressions.
 async function testDataIntegrity() {
   console.log('\n🔍 Testing Data Integrity...');
   
   const headers = { 'Authorization': `Bearer ${authToken}` };
   
-  // Check if time slots have required fields
+  // Verifies every time slot document has _id, label, startTime, and endTime.
   try {
     const timeSlots = await axios.get(`${API_BASE}/time-slots`, { headers });
     const slots = timeSlots.data;
@@ -176,7 +193,7 @@ async function testDataIntegrity() {
     logTest('Time Slot Schema Validation', false, error.message);
   }
   
-  // Check teachers data structure
+  // Verifies each teacher record has _id and shortName fields.
   try {
     const teachers = await axios.get(`${API_BASE}/teachers`, { headers });
     const teacherList = teachers.data;
@@ -195,12 +212,14 @@ async function testDataIntegrity() {
   }
 }
 
+// Orchestrates the full test sequence: auth -> core APIs -> time slot creation
+// -> data integrity. Prints a final summary with pass/fail counts and exit code.
 async function runCompleteTest() {
   console.log('🚀 Starting Complete Backend System Test...');
   console.log('='.repeat(50));
   
   try {
-    // Step 1: Authentication
+    // Step 1: Authentication — health check + login; exit early if this fails.
     const authPassed = await testAuthentication();
     if (!authPassed) {
       console.log('\n❌ Authentication failed. Cannot continue tests.');

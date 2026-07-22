@@ -11,6 +11,7 @@ import { roomsAPI } from '../services/api';
 import { useSemesterGroup } from '../contexts/SemesterGroupContext';
 import ClassDateModal from './ClassDateModal';
 
+/** PDF export button for room-wise routine with date range picker. */
 const RoomPDFActions = ({ 
   roomId,
   roomName = 'Room',

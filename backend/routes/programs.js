@@ -1,3 +1,12 @@
+/**
+ * Programs (Engineering Disciplines)
+ *
+ * CRUD operations for academic programs such as BCT (Computer Engineering),
+ * BEL (Electronics Engineering), BCE (Civil Engineering), etc. Each program
+ * belongs to a department and defines total semesters, syllabus year level,
+ * and section divisions.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { createProgram, getPrograms, getProgramById, updateProgram, deleteProgram } = require('../controllers/programController');

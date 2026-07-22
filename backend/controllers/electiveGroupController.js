@@ -1,12 +1,25 @@
+/**
+ * Elective Group Controller
+ *
+ * Manages elective-group definitions – a group is a container of subjects
+ * from which a section may choose (e.g. "Elective I – Technical").
+ * Groups are scoped to a program, semester, and academic year.
+ */
 const ElectiveGroup = require('../models/ElectiveGroup');
 const SectionElectiveChoice = require('../models/SectionElectiveChoice');
 const Subject = require('../models/Subject');
 const Program = require('../models/Program');
 const { validationResult } = require('express-validator');
 
-// @desc    Create a new elective group
-// @route   POST /api/elective-groups
-// @access  Private/Admin
+/**
+ * @desc    Create a new elective group
+ * @route   POST /api/elective-groups
+ * @access  Private/Admin
+ *
+ * Saves the group with its subject list and populates references for
+ * the response.  Duplicate group codes for the same program/semester
+ * are rejected (unique index).
+ */
 exports.createElectiveGroup = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -36,9 +49,14 @@ exports.createElectiveGroup = async (req, res) => {
   }
 };
 
-// @desc    Get all elective groups
-// @route   GET /api/elective-groups
-// @access  Private
+/**
+ * @desc    Get all elective groups
+ * @route   GET /api/elective-groups
+ * @access  Private
+ *
+ * Filters by programId, semester, academicYearId and isActive.  Returns
+ * groups sorted by semester and name.
+ */
 exports.getElectiveGroups = async (req, res) => {
   try {
     const { programId, semester, academicYearId, isActive } = req.query;
@@ -63,9 +81,15 @@ exports.getElectiveGroups = async (req, res) => {
   }
 };
 
-// @desc    Get elective group by ID
-// @route   GET /api/elective-groups/:id
-// @access  Private
+/**
+ * @desc    Get elective group by ID
+ * @route   GET /api/elective-groups/:id
+ * @access  Private
+ *
+ * Enriches the group document with real-time selection statistics by
+ * aggregating approved SectionElectiveChoice records that reference this
+ * group.
+ */
 exports.getElectiveGroupById = async (req, res) => {
   try {
     const electiveGroup = await ElectiveGroup.findById(req.params.id)
@@ -118,9 +142,14 @@ exports.getElectiveGroupById = async (req, res) => {
   }
 };
 
-// @desc    Update elective group
-// @route   PUT /api/elective-groups/:id
-// @access  Private/Admin
+/**
+ * @desc    Update elective group
+ * @route   PUT /api/elective-groups/:id
+ * @access  Private/Admin
+ *
+ * Validates that any subject references in the update body point to
+ * active Subject documents before applying the changes.
+ */
 exports.updateElectiveGroup = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -177,9 +206,14 @@ exports.updateElectiveGroup = async (req, res) => {
   }
 };
 
-// @desc    Delete elective group
-// @route   DELETE /api/elective-groups/:id
-// @access  Private/Admin
+/**
+ * @desc    Delete elective group
+ * @route   DELETE /api/elective-groups/:id
+ * @access  Private/Admin
+ *
+ * Blocks deletion if any SectionElectiveChoice record references this
+ * group, preventing orphaned choices.
+ */
 exports.deleteElectiveGroup = async (req, res) => {
   try {
     const electiveGroup = await ElectiveGroup.findById(req.params.id);
@@ -210,9 +244,14 @@ exports.deleteElectiveGroup = async (req, res) => {
   }
 };
 
-// @desc    Add subject to elective group
-// @route   POST /api/elective-groups/:id/subjects
-// @access  Private/Admin
+/**
+ * @desc    Add subject to elective group
+ * @route   POST /api/elective-groups/:id/subjects
+ * @access  Private/Admin
+ *
+ * Appends a new subject entry to the group's subjects array after
+ * verifying the subject exists, is active, and is not already present.
+ */
 exports.addSubjectToElectiveGroup = async (req, res) => {
   try {
     const { subjectId, maxSections } = req.body;
@@ -264,9 +303,15 @@ exports.addSubjectToElectiveGroup = async (req, res) => {
   }
 };
 
-// @desc    Remove subject from elective group
-// @route   DELETE /api/elective-groups/:id/subjects/:subjectId
-// @access  Private/Admin
+/**
+ * @desc    Remove subject from elective group
+ * @route   DELETE /api/elective-groups/:id/subjects/:subjectId
+ * @access  Private/Admin
+ *
+ * Prevents removal if the subject has already been selected by a section
+ * (Submitted or Approved status).  Otherwise removes it from the group's
+ * subject list.
+ */
 exports.removeSubjectFromElectiveGroup = async (req, res) => {
   try {
     const electiveGroup = await ElectiveGroup.findById(req.params.id);
@@ -301,9 +346,15 @@ exports.removeSubjectFromElectiveGroup = async (req, res) => {
   }
 };
 
-// @desc    Get elective groups by program code
-// @route   GET /api/elective-groups/program/:programCode
-// @access  Private
+/**
+ * @desc    Get elective groups by program code
+ * @route   GET /api/elective-groups/program/:programCode
+ * @access  Private
+ *
+ * Resolves the program code to an ObjectId, then fetches all elective
+ * groups belonging to that program with optional semester/academic-year
+ * filtering.
+ */
 exports.getElectivesByProgram = async (req, res) => {
   try {
     const { programCode } = req.params;

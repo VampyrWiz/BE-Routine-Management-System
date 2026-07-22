@@ -1,3 +1,4 @@
+/** Admin CRUD for lab group assignments within programs. */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -37,6 +38,7 @@ import { labGroupsAPI, programsAPI, subjectsAPI } from '../../services/api';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+/** Admin page for managing lab groups within programs and semesters. */
 const LabGroupManagement = () => {
   const [labGroups, setLabGroups] = useState([]);
   const [programs, setPrograms] = useState([]);

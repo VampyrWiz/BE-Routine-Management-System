@@ -1,7 +1,9 @@
+/** Hook that filters routine data by the active semester/group selection. */
 import { useMemo } from 'react';
 import { useSemesterGroup, filterRoutineBySemesterGroup } from '../contexts/SemesterGroupContext';
 
 // Hook to get filtered routine data based on semester group
+/** Filters routine rows by the currently selected semester/group context. */
 export const useFilteredRoutine = (routineData, options = {}) => {
   const { semesterGroup } = useSemesterGroup();
   const { 

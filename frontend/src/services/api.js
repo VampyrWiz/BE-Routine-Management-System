@@ -1,3 +1,4 @@
+/** API client – axios instance and endpoint definitions for all backend routes. */
 import axios from 'axios';
 
 const API_URL = '/api';
@@ -216,6 +217,7 @@ const queuedRequest = (requestFn) => {
 };
 
 // Auth API
+/** Authentication endpoints: login, logout, profile. */
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/users', userData),
@@ -230,6 +232,7 @@ export const authAPI = {
 };
 
 // Teachers API
+/** Teacher CRUD endpoints. */
 export const teachersAPI = {
   getTeachers: (params = {}) => {
     return queuedRequest(() => api.get('/teachers', { params }));
@@ -323,6 +326,7 @@ export const teachersAPI = {
 };
 
 // Programs API
+/** Program CRUD endpoints. */
 export const programsAPI = {
   getPrograms: () => queuedRequest(
     () => api.get('/programs'),
@@ -331,11 +335,13 @@ export const programsAPI = {
 };
 
 // Program Semesters API
+/** Program-semester mapping endpoints. */
 export const programSemestersAPI = {
   getCurriculum: (programCode) => api.get(`/program-semesters/${programCode}`)
 };
 
 // Routines API
+/** Routine CRUD endpoints (the main class-slot assignments). */
 export const routinesAPI = {
   getRoutine: (programCode, semester, section) => 
     api.get(`/routines/${programCode}/${semester}/${section}`),
@@ -424,6 +430,7 @@ export const routinesAPI = {
 };
 
 // Subjects API
+/** Subject CRUD endpoints. */
 export const subjectsAPI = {
   getSubjects: () => queuedRequest(
     () => api.get('/subjects'),
@@ -482,6 +489,7 @@ export const subjectsAPI = {
 };
 
 // Rooms API
+/** Room CRUD endpoints. */
 export const roomsAPI = {
   getRooms: () => api.get('/rooms'),
   getRoom: (id) => api.get(`/rooms/${id}`),
@@ -518,6 +526,7 @@ export const roomsAPI = {
 };
 
 // TimeSlots API
+/** Time slot configuration endpoints. */
 export const timeSlotsAPI = {
   getTimeSlots: (params = {}) => {
     const queryParams = new URLSearchParams(params).toString();
@@ -533,6 +542,7 @@ export const timeSlotsAPI = {
 };
 
 // Users API
+/** User/admin account management endpoints. */
 export const usersAPI = {
   getProfile: () => api.get('/users/me'),
   updateProfile: (userData) => api.put('/users/me', userData),
@@ -548,6 +558,7 @@ export const usersAPI = {
 };
 
 // Departments API
+/** Department CRUD endpoints. */
 export const departmentsAPI = {
   getDepartments: () => api.get('/departments'),
   createDepartment: (data) => api.post('/departments', data),
@@ -558,6 +569,7 @@ export const departmentsAPI = {
 };
 
 // Academic Calendars API
+/** Academic calendar event endpoints. */
 export const academicCalendarsAPI = {
   getCalendars: () => api.get('/academic-calendars'),
   createCalendar: (data) => api.post('/academic-calendars', data),
@@ -567,6 +579,7 @@ export const academicCalendarsAPI = {
 };
 
 // Sessions API
+/** Academic session CRUD endpoints. */
 export const sessionsAPI = {
   getAllSessions: () => api.get('/sessions'),
   getSessionDashboard: () => api.get('/sessions/dashboard'),
@@ -593,6 +606,7 @@ export const sessionsAPI = {
 };
 
 // Elective Groups API
+/** Elective group CRUD endpoints. */
 export const electiveGroupsAPI = {
   getElectiveGroups: () => api.get('/elective-groups'),
   createElectiveGroup: (data) => api.post('/elective-groups', data),
@@ -615,6 +629,7 @@ export const electiveGroupsAPI = {
 };
 
 // Lab Groups API
+/** Lab group CRUD endpoints. */
 export const labGroupsAPI = {
   getLabGroups: () => api.get('/lab-groups'),
   createLabGroup: (data) => api.post('/lab-groups', data),
@@ -627,6 +642,7 @@ export const labGroupsAPI = {
 };
 
 // Conflicts API
+/** Conflict detection endpoints. */
 export const conflictsAPI = {
   detectConflicts: () => api.get('/conflicts/detect'),
   resolveConflict: (id, data) => api.post(`/conflicts/${id}/resolve`, data),
@@ -636,6 +652,7 @@ export const conflictsAPI = {
 };
 
 // Analytics API
+/** Analytics data endpoints. */
 export const analyticsAPI = {
   getTeacherWorkload: (id) => api.get(`/teachers/${id}/workload`),
   getRoomUtilization: () => api.get('/rooms/utilization'),
@@ -648,6 +665,7 @@ export const analyticsAPI = {
 };
 
 // Templates API
+/** Routine template CRUD endpoints. */
 export const templatesAPI = {
   getTemplates: () => api.get('/templates'),
   createTemplate: (data) => api.post('/templates', data),
@@ -659,6 +677,7 @@ export const templatesAPI = {
 };
 
 // Room Vacancy API
+/** Room vacancy analysis endpoints. */
 export const roomVacancyAPI = {
   getVacantRooms: (dayIndex, slotIndex) => 
     api.get(`/routines/rooms/vacant?dayIndex=${dayIndex}&slotIndex=${slotIndex}`),
@@ -670,6 +689,7 @@ export const roomVacancyAPI = {
 };
 
 // Academic Calendar API
+/** Single-event academic calendar endpoint (legacy). */
 export const academicCalendarAPI = {
   getAcademicCalendars: () => api.get('/academic-calendars'),
   getCurrentAcademicCalendar: () => api.get('/academic-calendars/current'),
@@ -681,6 +701,7 @@ export const academicCalendarAPI = {
 };
 
 // Routine Slots API
+/** Routine-slot mapping endpoints. */
 export const routineSlotsAPI = {
   getRoutineSlots: () => api.get('/routine-slots'),
   createRoutineSlot: (data) => api.post('/routine-slots', data),
@@ -691,4 +712,5 @@ export const routineSlotsAPI = {
   bulkCreateSlots: (data) => api.post('/routine-slots/bulk', data)
 };
 
+/** Default axios instance for all API calls. */
 export default api;

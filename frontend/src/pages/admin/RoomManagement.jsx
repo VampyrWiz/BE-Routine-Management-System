@@ -1,3 +1,4 @@
+/** Admin CRUD for rooms – add, edit, delete rooms with day availability. */
 import React, { useState } from 'react';
 import {
   Card,
@@ -52,6 +53,7 @@ const DAYS_OF_WEEK = [
   'Saturday'
 ];
 
+/** Admin CRUD for room management with day-wise availability. */
 const RoomManagement = () => {
   const { message } = App.useApp();
   const [form] = Form.useForm();

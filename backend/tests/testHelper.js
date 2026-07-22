@@ -1,24 +1,29 @@
 /**
  * Test Helper Utilities
- * Common functions and configurations for all tests
+ *
+ * Shared configuration, authentication wrappers, sample test data templates,
+ * and utility functions used by all test suites in the project.
+ * Reduces duplication by centralising API base URL, admin credentials,
+ * authenticated request helpers, and common validators.
  */
 
 const axios = require('axios');
 const mongoose = require('mongoose');
 
+// Base URL for all API requests during testing.
 const API_BASE = 'http://localhost:7102/api';
 
-// Admin credentials for testing
+// Predefined admin credentials for authenticating test requests.
 const adminCredentials = {
   email: 'admin@ioe.edu.np',
   password: 'admin123'
 };
 
-// Test database helper functions
+// Placeholder; the test environment reuses the existing live DB connection
+// rather than spinning up a dedicated test database.
 async function connectTestDB() {
   try {
     if (mongoose.connection.readyState === 0) {
-      // Use test database or existing connection
       console.log('Test DB: Using existing connection');
     }
     return true;
@@ -28,9 +33,10 @@ async function connectTestDB() {
   }
 }
 
+// Placeholder — does not actually drop collections. Logs a message to indicate
+// cleanup would occur, avoiding accidental data loss during test runs.
 async function clearTestDB() {
   try {
-    // For testing, we'll just log instead of actually clearing
     console.log('Test DB: Cleanup simulated');
     return true;
   } catch (error) {
@@ -39,9 +45,10 @@ async function clearTestDB() {
   }
 }
 
+// Placeholder — does not disconnect Mongoose. Logs a message instead, keeping
+// the connection alive for subsequent tests in the same process.
 async function closeTestDB() {
   try {
-    // For testing, we'll just log instead of actually closing
     console.log('Test DB: Connection close simulated');
     return true;
   } catch (error) {
@@ -50,7 +57,8 @@ async function closeTestDB() {
   }
 }
 
-// Authentication helper
+// Authenticates with admin credentials and returns the JWT token string.
+// Throws if login fails, which will cause the calling test to fail fast.
 async function getAuthToken() {
   try {
     const response = await axios.post(`${API_BASE}/auth/login`, adminCredentials);
@@ -61,7 +69,8 @@ async function getAuthToken() {
   }
 }
 
-// Test data templates
+// Sample payload templates for creating test records. Each entry contains
+// realistic-but-fake data for the corresponding resource type.
 const testData = {
   teacher: {
     name: 'Test Teacher',
@@ -99,6 +108,8 @@ const testData = {
 
 /**
  * Login as admin and return auth token
+ * Identical to getAuthToken() but re-throws the original error instead of
+ * wrapping it, giving callers more control over error handling.
  */
 async function loginAsAdmin() {
   try {
@@ -112,6 +123,10 @@ async function loginAsAdmin() {
 
 /**
  * Make authenticated API request
+ * Generic wrapper around axios that attaches a Bearer token header.
+ * If no token is provided, it logs in as admin automatically.
+ * Always returns a structured { success, status, data/error } object,
+ * never throws — callers should check the `success` flag.
  */
 async function makeAuthenticatedRequest(method, endpoint, data = null, token = null) {
   if (!token) {
@@ -146,6 +161,8 @@ async function makeAuthenticatedRequest(method, endpoint, data = null, token = n
 
 /**
  * Test API endpoint availability
+ * Performs a simple GET without auth to check whether an endpoint is reachable.
+ * Returns { available, status } rather than throwing on non-2xx responses.
  */
 async function testEndpointAvailability(endpoint) {
   try {
@@ -165,6 +182,9 @@ async function testEndpointAvailability(endpoint) {
 
 /**
  * Clean up test data
+ * Iterates over an array of created items and sends a DELETE request for each.
+ * Silently swallows individual deletion failures so one failure does not abort
+ * the cleanup of remaining items.
  */
 async function cleanupTestData(token, resourceType, createdItems = []) {
   console.log(`Cleaning up ${resourceType} test data...`);
@@ -181,6 +201,8 @@ async function cleanupTestData(token, resourceType, createdItems = []) {
 
 /**
  * Wait for a specified amount of time
+ * Simple promise-based delay for throttling test requests or waiting for
+ * asynchronous side-effects to settle.
  */
 function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -188,6 +210,8 @@ function wait(ms) {
 
 /**
  * Generate random test data
+ * Produces a pseudo-random alphanumeric string of the given length.
+ * Useful for creating unique test record names/emails to avoid collisions.
  */
 function generateRandomString(length = 8) {
   return Math.random().toString(36).substring(2, 2 + length);
@@ -195,6 +219,9 @@ function generateRandomString(length = 8) {
 
 /**
  * Validate response structure
+ * Checks that a response object (from makeAuthenticatedRequest) succeeded and
+ * contains all the expected top-level fields in its data. Returns
+ * { isValid, errors } for compositional assertion in tests.
  */
 function validateResponse(response, expectedFields = []) {
   const errors = [];

@@ -1,3 +1,11 @@
+/**
+ * Section Elective Choices
+ *
+ * Manages section-level elective subject selection. Sections choose which
+ * elective subjects to offer from available elective groups. Supports a
+ * submission and approval workflow (HoD approval required).
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');

@@ -1,6 +1,9 @@
 /**
- * Time Slot Utilities
- * Provides consistent time slot ordering and fetching across the application
+ * Time Slot Utilities — query and ordering helpers.
+ * Centralises database queries for time slots by context
+ * (program/semester/section), provides sort-order-based reordering,
+ * and helper functions for positional insertion and minute conversion
+ * to guarantee consistent column ordering in the routine grid.
  */
 
 const TimeSlot = require('../models/TimeSlot');

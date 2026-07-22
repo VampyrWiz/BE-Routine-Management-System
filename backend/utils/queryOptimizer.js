@@ -1,9 +1,16 @@
+/**
+ * Query Optimizer — Mongoose schema enhancer.
+ * Applies performance optimisations (automatic lean(), pagination helpers,
+ * batch insert/update, and slow-query monitoring) to reduce database load
+ * and improve API response times across the system.
+ */
+
 const mongoose = require('mongoose');
 
 // Middleware to optimize database queries
 class QueryOptimizer {
   
-  // Add lean() to queries that don't need full mongoose documents
+  /** Pre-hook that appends .lean() to find/findOne/findOneAndUpdate when full mongoose docs are not required */
   static leanQueries(schema) {
     schema.pre(['find', 'findOne', 'findOneAndUpdate'], function() {
       if (!this.getOptions().lean && this.op !== 'findOneAndUpdate') {
@@ -12,7 +19,7 @@ class QueryOptimizer {
     });
   }
 
-  // Add pagination helper
+  /** Attach a .paginate() static to the schema for consistent paginated queries with metadata */
   static addPagination(schema) {
     schema.statics.paginate = async function(filter = {}, options = {}) {
       const page = parseInt(options.page) || 1;
@@ -40,7 +47,7 @@ class QueryOptimizer {
     };
   }
 
-  // Batch operations helper
+  /** Attach batchInsert and batchUpdate statics for efficient bulk writes */
   static addBatchOperations(schema) {
     schema.statics.batchInsert = async function(docs, options = {}) {
       const batchSize = options.batchSize || 100;

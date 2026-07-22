@@ -1,8 +1,8 @@
+/** Service wrapping backend queue operations for routine processing. */
 import api from './api';
-
-// Queue service for frontend communication with backend queue operations
+/** Service for communicating with the backend queue processing API. */
 class QueueService {
-  // Check queue health status
+  /** Check if the backend queue is healthy and processing. */
   async checkQueueHealth() {
     try {
       const response = await api.get('/health/queue');

@@ -1,3 +1,13 @@
+/**
+ * Seed script to populate the Teacher collection from a JSON data file.
+ *
+ * Reads teacher records from `backend/dataJson/teacher-aero-mech.json`,
+ * validates designations, caps maxWeeklyHours at 24, generates unique
+ * short names, and creates or updates each teacher in MongoDB.
+ *
+ * Usage: node backend/seed-teachers.js
+ */
+
 const mongoose = require('mongoose');
 const Teacher = require('./models/Teacher');
 const fs = require('fs');
@@ -6,7 +16,13 @@ const path = require('path');
 // Load environment variables from the root directory
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-// Helper function to generate short name
+/**
+ * Generates a short name from a full name by taking:
+ * - 1 name → first 3 characters
+ * - 2 names → first letter of each
+ * - 3+ names → first letter of first 3 parts
+ */
+function generateShortName(fullName) {
 function generateShortName(fullName) {
   const nameParts = fullName.split(' ').filter(part => part.length > 0);
   
@@ -22,7 +38,10 @@ function generateShortName(fullName) {
   }
 }
 
-// Helper function to generate alternative short name (2 from first + 1 from last)
+/**
+ * Fallback short-name generator for conflict resolution.
+ * Takes 2 letters from the first name + 1 letter from the last name.
+ */
 function generateAlternativeShortName(fullName) {
   const nameParts = fullName.split(' ').filter(part => part.length > 0);
   
@@ -43,7 +62,11 @@ function generateAlternativeShortName(fullName) {
   return generateShortName(fullName);
 }
 
-// Helper function to ensure unique short name
+/**
+ * Ensures the generated short name is unique across all teachers.
+ * If a conflict is found, tries the alternative short-name strategy,
+ * and if that also collides, appends incrementing integers.
+ */
 async function ensureUniqueShortName(fullName, originalShortName) {
   let shortName = originalShortName;
   
@@ -71,7 +94,10 @@ async function ensureUniqueShortName(fullName, originalShortName) {
   return shortName;
 }
 
-// Connect to MongoDB
+/**
+ * Connects to MongoDB using the URI from environment variables.
+ * Tries MONGODB_URI, MONGODB_ATLAS_URI, and MONGO_URI in order.
+ */
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.MONGODB_ATLAS_URI;
@@ -88,7 +114,11 @@ const connectDB = async () => {
   }
 };
 
-// Seed electrical teachers data
+/**
+ * Reads teacher data from a JSON file and upserts each record into the
+ * Teacher collection. Validates designations, caps hours, and ensures
+ * every teacher gets a unique shortName. Logs a summary on completion.
+ */
 const seedElectricalTeachers = async () => {
   try {
     console.log('🚀 Starting electrical teachers data seeding...');
@@ -197,7 +227,10 @@ const seedElectricalTeachers = async () => {
   }
 };
 
-// Main execution
+/**
+ * Entry point: connects to the database, runs the seeding process,
+ * then closes the connection and exits.
+ */
 const main = async () => {
   try {
     await connectDB();

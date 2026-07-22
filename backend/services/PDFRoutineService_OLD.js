@@ -1,3 +1,18 @@
+/**
+ * PDFRoutineService (Legacy / OLD)
+ *
+ * Retained for backward compatibility. Originally this class contained all PDF
+ * generation logic inline (header, grid, teacher-mapping table, spanning-class
+ * detection, etc.). It now delegates all public methods to UnifiedPDFService,
+ * which fixed a critical time-slot mapping bug (slotIndex mapped as array index
+ * instead of TimeSlot._id) and consolidated the three duplicated implementations
+ * (class, teacher, room).
+ *
+ * Deprecated methods (generateRoomSchedulePDF, generateTeacherSchedulePDF,
+ * generateClassSchedulePDF, etc.) are preserved with their original signatures
+ * so that existing callers continue to work without modification.
+ */
+
 const UnifiedPDFService = require('./UnifiedPDFService');
 
 /**

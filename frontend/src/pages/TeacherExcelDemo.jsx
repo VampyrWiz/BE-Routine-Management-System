@@ -14,6 +14,7 @@ import TeacherScheduleManager from '../components/TeacherScheduleManager';
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 
+/** Demo page for teacher Excel export (placeholder – PDF used instead). */
 const TeacherExcelDemo = () => {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
 

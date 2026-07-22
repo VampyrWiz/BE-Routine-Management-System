@@ -4,6 +4,7 @@
  * to keep the UI working without Excel dependencies
  */
 
+/** Placeholder Excel service – all methods are stubs (replaced by PDF). */
 class ExcelService {
   constructor(routinesAPI) {
     // Stub constructor

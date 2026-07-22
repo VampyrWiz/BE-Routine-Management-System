@@ -1,6 +1,8 @@
+/** React error boundary that catches render errors and shows an Alert. */
 import React from 'react';
 import { Alert } from 'antd';
 
+/** Error boundary that catches render exceptions and displays a fallback UI. */
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);

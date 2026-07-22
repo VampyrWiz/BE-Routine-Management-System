@@ -8,6 +8,7 @@
  * @param {string} fallback - Fallback text if data is null/undefined
  * @returns {string} - Safe rendered data
  */
+/** Render a value safely, falling back to a default if null/undefined. */
 export const safeRender = (data, fallback = 'N/A') => {
   if (data === null || data === undefined || data === '') {
     return fallback;
@@ -29,6 +30,7 @@ export const safeRender = (data, fallback = 'N/A') => {
  * @param {any} fallback - Fallback value
  * @returns {any} - Extracted value or fallback
  */
+/** Safely access a nested property using a dot-separated path string. */
 export const safeGet = (obj, path, fallback = null) => {
   try {
     const keys = path.split('.');
@@ -52,6 +54,7 @@ export const safeGet = (obj, path, fallback = null) => {
  * @param {string} keyField - Field to use as row key
  * @returns {array} - Processed table data
  */
+/** Map an array to add unique `key` props required by antd Table. */
 export const prepareTableData = (data, keyField = '_id') => {
   if (!Array.isArray(data)) {
     console.warn('Table data is not an array:', data);
@@ -79,6 +82,7 @@ export const prepareTableData = (data, keyField = '_id') => {
  * @param {object} config - Column configuration
  * @returns {object} - Safe column configuration
  */
+/** Create an antd Table column definition with safe defaults. */
 export const createSafeColumn = (config) => {
   const { render, ...otherConfig } = config;
   

@@ -1,3 +1,10 @@
+/**
+ * Cache Manager for routine management system.
+ * Provides in-memory caching with tiered TTL configuration for routine data,
+ * static reference data, and user data. Implements cache-aside pattern via
+ * Express middleware to reduce database load and improve API response times.
+ */
+
 const NodeCache = require('node-cache');
 
 // Create cache instances with different TTL for different data types
@@ -61,6 +68,7 @@ class CacheManager {
     };
   }
 
+  /** Select the appropriate cache instance based on content type (routine/static/user) */
   getCache(type) {
     switch (type) {
       case 'static': return staticCache;
@@ -69,6 +77,7 @@ class CacheManager {
     }
   }
 
+  /** Build a unique cache key from the request method, path, user ID, and query/params */
   generateKey(req) {
     const userId = req.user ? req.user._id : 'anonymous';
     const query = JSON.stringify(req.query);
@@ -76,17 +85,19 @@ class CacheManager {
     return `${req.method}:${req.path}:${userId}:${query}:${params}`;
   }
 
-  // Manual cache operations
+  /** Store a value in the specified cache with optional custom TTL */
   set(key, value, type = 'routine', ttl = null) {
     const cache = this.getCache(type);
     return cache.set(key, value, ttl);
   }
 
+  /** Retrieve a value from the specified cache by key */
   get(key, type = 'routine') {
     const cache = this.getCache(type);
     return cache.get(key);
   }
 
+  /** Remove a single entry from the specified cache */
   del(key, type = 'routine') {
     const cache = this.getCache(type);
     return cache.del(key);
