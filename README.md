@@ -8,6 +8,9 @@
 
 The IOE Pulchowk Campus Routine Management System is described, in this document, as a comprehensive academic schedule management application built for the Institute of Engineering, Pulchowk Campus. Intelligent scheduling, automated conflict detection, and real-time synchronization across all connected clients are provided by the system.
 
+This project was originally developed by **Manish** and handed over to the **080 BATCH of BCT** at **IOE Pulchowk Campus**. The repository is now maintained at:
+[https://github.com/VampyrWiz/BE-Routine-Management-System](https://github.com/VampyrWiz/BE-Routine-Management-System)
+
 ## Table of Contents
 
 The following sections are included in this document: Overview; System Roles and Access Control; Features; Technology Stack; System Architecture; Installation and Setup; Project Structure; Backend API; Frontend Application; Database Design; Development; Testing; Deployment; Documentation; Contributing; Support; and License.
@@ -75,8 +78,8 @@ Node.js 18 or above, together with npm, a MongoDB Atlas account or a local Mongo
 The repository is cloned, and the working directory is changed, as follows.
 
 ```bash
-git clone https://github.com/manishh101/BE-routine.git
-cd BE-routine
+git clone https://github.com/VampyrWiz/BE-Routine-Management-System.git
+cd BE-Routine-Management-System
 ```
 
 An environment file is then created from the provided template, and the values shown below are updated to match the target environment.
@@ -221,8 +224,8 @@ sudo apt install certbot python3-certbot-nginx -y
 The application is then deployed as follows.
 
 ```bash
-git clone https://github.com/manishh101/BE-routine.git
-cd BE-routine
+git clone https://github.com/VampyrWiz/BE-Routine-Management-System.git
+cd BE-Routine-Management-System
 
 cd backend
 npm install --production
