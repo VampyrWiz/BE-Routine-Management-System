@@ -11,6 +11,8 @@ The IOE Pulchowk Campus Routine Management System is described, in this document
 This project was originally developed by **Manish** and handed over to the **080 BATCH of BCT** at **IOE Pulchowk Campus**. The repository is now maintained at:
 [https://github.com/VampyrWiz/BE-Routine-Management-System](https://github.com/VampyrWiz/BE-Routine-Management-System)
 
+If you want to access the old original project, visit: [https://github.com/manishh101/BE-routine](https://github.com/manishh101/BE-routine)
+
 ## Table of Contents
 
 The following sections are included in this document: Overview; System Roles and Access Control; Features; Technology Stack; System Architecture; Installation and Setup; Project Structure; Backend API; Frontend Application; Database Design; Development; Testing; Deployment; Documentation; Contributing; Support; and License.
