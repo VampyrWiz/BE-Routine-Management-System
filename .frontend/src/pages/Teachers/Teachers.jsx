@@ -142,13 +142,15 @@ export default function Teachers() {
                   <input className="form-control" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
                 </div>
               </div>
-              {/* Password field is only shown for new teachers; for edits,
-                  leaving it blank preserves the existing password on the server
-                  (the PUT payload omits password if empty). */}
+              {/* Password is only shown for new teachers; if left blank the
+                  server auto-generates one from the teacher's first name + "123"
+                  so the HoD does not have to invent a credential on the spot.
+                  For edits the field is hidden — leaving it empty on the server
+                  preserves the existing password. */}
               {!editData && (
                 <div className="form-group">
-                  <label>Password</label>
-                  <input className="form-control" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required={!editData} />
+                  <label>Password (leave blank for auto-generate)</label>
+                  <input className="form-control" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
                 </div>
               )}
               <div className="form-row">

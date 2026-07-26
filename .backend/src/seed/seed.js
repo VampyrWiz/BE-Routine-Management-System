@@ -480,32 +480,127 @@ async function seed() {
     await Subject.insertMany(allSubjects);
     console.log(`${allSubjects.length} subjects seeded`);
 
-    await Teacher.deleteMany({});
+    try {
+      await Teacher.collection.drop();
+    } catch (_) {
+      await Teacher.deleteMany({});
+    }
 
     const teachersData = [
+      // === Keep existing placeholder teachers for DOASCE, DOEE, DOCE ===
       { name: 'Dr. HoD (DOASCE)', email: 'hod@doasce.edu.np', password: 'hod123', contact: '9851001001', designation: 'Professor', department_code: 'DOASCE', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
       { name: 'Dr. DHoD (DOASCE)', email: 'dhod@doasce.edu.np', password: 'dhod123', contact: '9851001002', designation: 'Associate Professor', department_code: 'DOASCE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
-      { name: 'Er. Teacher (DOASCE)', email: 'teacher@doasce.edu.np', password: 'teacher123', contact: '9851001003', designation: 'Lecturer', department_code: 'DOASCE', subject_codes: ['ENSH 101'], role: 'teacher', max_hours_per_week: 15 },
-
-      { name: 'Dr. HoD (DOECE)', email: 'hod@doece.edu.np', password: 'hod123', contact: '9851001004', designation: 'Professor', department_code: 'DOECE', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
-      { name: 'Dr. DHoD (DOECE)', email: 'dhod@doece.edu.np', password: 'dhod123', contact: '9851001005', designation: 'Associate Professor', department_code: 'DOECE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
-      { name: 'Er. Teacher (DOECE)', email: 'teacher@doece.edu.np', password: 'teacher123', contact: '9851001006', designation: 'Lecturer', department_code: 'DOECE', subject_codes: ['ENCT 101'], role: 'teacher', max_hours_per_week: 15 },
-
-      { name: 'Dr. HoD (DOMAE)', email: 'hod@domae.edu.np', password: 'hod123', contact: '9851001007', designation: 'Professor', department_code: 'DOMAE', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
-      { name: 'Dr. DHoD (DOMAE)', email: 'dhod@domae.edu.np', password: 'dhod123', contact: '9851001008', designation: 'Associate Professor', department_code: 'DOMAE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
-      { name: 'Er. Teacher (DOMAE)', email: 'teacher@domae.edu.np', password: 'teacher123', contact: '9851001009', designation: 'Lecturer', department_code: 'DOMAE', subject_codes: ['ENSH 101'], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Er. Teacher (DOASCE)', email: 'teacher@doasce.edu.np', password: 'teacher123', contact: '9851001003', designation: 'Lecturer', department_code: 'DOASCE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
 
       { name: 'Dr. HoD (DOEE)', email: 'hod@doee.edu.np', password: 'hod123', contact: '9851001010', designation: 'Professor', department_code: 'DOEE', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
       { name: 'Dr. DHoD (DOEE)', email: 'dhod@doee.edu.np', password: 'dhod123', contact: '9851001011', designation: 'Associate Professor', department_code: 'DOEE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
-      { name: 'Er. Teacher (DOEE)', email: 'teacher@doee.edu.np', password: 'teacher123', contact: '9851001012', designation: 'Lecturer', department_code: 'DOEE', subject_codes: ['ENSH 101'], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Er. Teacher (DOEE)', email: 'teacher@doee.edu.np', password: 'teacher123', contact: '9851001012', designation: 'Lecturer', department_code: 'DOEE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
 
       { name: 'Dr. HoD (DOCE)', email: 'hod@doce.edu.np', password: 'hod123', contact: '9851001013', designation: 'Professor', department_code: 'DOCE', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
       { name: 'Dr. DHoD (DOCE)', email: 'dhod@doce.edu.np', password: 'dhod123', contact: '9851001014', designation: 'Associate Professor', department_code: 'DOCE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
-      { name: 'Er. Teacher (DOCE)', email: 'teacher@doce.edu.np', password: 'teacher123', contact: '9851001015', designation: 'Lecturer', department_code: 'DOCE', subject_codes: ['ENCE 101'], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Er. Teacher (DOCE)', email: 'teacher@doce.edu.np', password: 'teacher123', contact: '9851001015', designation: 'Lecturer', department_code: 'DOCE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
 
-      { name: 'Dr. HoD (DOA)', email: 'hod@doa.edu.np', password: 'hod123', contact: '9851001016', designation: 'Professor', department_code: 'DOA', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
-      { name: 'Dr. DHoD (DOA)', email: 'dhod@doa.edu.np', password: 'dhod123', contact: '9851001017', designation: 'Associate Professor', department_code: 'DOA', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
-      { name: 'Er. Teacher (DOA)', email: 'teacher@doa.edu.np', password: 'teacher123', contact: '9851001018', designation: 'Lecturer', department_code: 'DOA', subject_codes: ['ENAR 101'], role: 'teacher', max_hours_per_week: 15 },
+      // === DOA — Department of Architecture ===
+      { name: 'Dr. Ashim Ratna Bajracharya', email: 'ashim.bajracharya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Professor', department_code: 'DOA', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
+      { name: 'Anjana Shrestha Valdya', email: 'anjana.shrestha@doa.edu.np', password: 'teacher123', contact: '', designation: 'Associate Professor', department_code: 'DOA', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
+      { name: 'Dr. Inu Pradhan Salike', email: 'inu.pradhan@doa.edu.np', password: 'teacher123', contact: '', designation: 'Associate Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Ajay Chandra Lal', email: 'ajay.lal@doa.edu.np', password: 'teacher123', contact: '', designation: 'Associate Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Bijay Singh', email: 'bijay.singh@doa.edu.np', password: 'teacher123', contact: '', designation: 'Associate Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Sushil B. Bajracharya', email: 'sushil.bajracharya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Sangeeta Singh', email: 'sangeeta.singh@doa.edu.np', password: 'teacher123', contact: '', designation: 'Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Sanjaya Upreti', email: 'sanjaya.upreti@doa.edu.np', password: 'teacher123', contact: '', designation: 'Associate Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Surya Gyawali', email: 'surya.gyawali@doa.edu.np', password: 'teacher123', contact: '', designation: 'Associate Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dipa Shakya', email: 'dipa.shakya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Prajwal Hada', email: 'prajwal.hada@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Ritu Raj Rai', email: 'ritu.rai@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Ram Laxmi Tamrakar', email: 'ram.tamrakar@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Eurika Bajracharya', email: 'eurika.bajracharya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Rina Bajracharya', email: 'rina.bajracharya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Luna Bajracharya', email: 'luna.bajracharya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Pratiksha Shrestha', email: 'pratiksha.shrestha@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Nisha Shreshta', email: 'nisha.shreshta@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Timila Bajracharya', email: 'timila.bajracharya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Prabhasa Bajracharya', email: 'prabhasa.bajracharya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Teaching Assistant', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Raju Basukala', email: 'raju.basukala@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Selma Vaidya', email: 'selma.vaidya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dristi Manandhar', email: 'dristi.manandhar@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Jasmine Shakya', email: 'jasmine.shakya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Ruchi Bajracharya', email: 'ruchi.bajracharya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Sudha Shrestha', email: 'sudha.shrestha@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Padma Jeev Tamrakar', email: 'padma.tamrakar@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Deepak Tamrakar', email: 'deepak.tamrakar@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Batuk Krishna Parajuli', email: 'batuk.parajuli@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Chandra P. Bahttu', email: 'chandra.bahttu@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Sekiya Shakya', email: 'sekiya.shakya@doa.edu.np', password: 'teacher123', contact: '', designation: 'Part Time Teacher', department_code: 'DOA', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+
+      // === DOMAE — Department of Mechanical and Aerospace Engineering ===
+      { name: 'Sudip Bhattrai', email: 'sudip.bhattrai@domae.edu.np', password: 'teacher123', contact: '+977-9866925296', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
+      { name: 'Laxman Motra', email: 'laxman.motra@domae.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
+      { name: 'Kamal Darlami', email: 'kamal.darlami@domae.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
+      { name: 'Prof. Dr. Laxman Poudel', email: 'laxman.poudel@domae.edu.np', password: 'teacher123', contact: '+977-1-5521611', designation: 'Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Prof. Dr. Rajendra Shrestha', email: 'rajendra.shrestha@domae.edu.np', password: 'teacher123', contact: '+977-1-5543071', designation: 'Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Prof. Dr. Mahesh Chandra Luintel', email: 'mahesh.luintel@domae.edu.np', password: 'teacher123', contact: '+977-1-6913111', designation: 'Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Prof. Dr. Surya Prasad Adhikari', email: 'surya.adhikari@domae.edu.np', password: 'teacher123', contact: '+977-5542054', designation: 'Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Bishwo Prasanna Amatya', email: 'bishwo.amatya@domae.edu.np', password: 'teacher123', contact: '', designation: 'Associate Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Rajesh Kaji Kayastha', email: 'rajesh.kayastha@domae.edu.np', password: 'teacher123', contact: '', designation: 'Associate Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Shree Raj Shakya', email: 'shree.shakya@domae.edu.np', password: 'teacher123', contact: '+977-1-5532235', designation: 'Associate Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Nawraj Bhattarai', email: 'nawraj.bhattarai@domae.edu.np', password: 'teacher123', contact: '+977-5542054', designation: 'Associate Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Hari Bahadur Darlami', email: 'hari.darlami@domae.edu.np', password: 'teacher123', contact: '+977-1-5521611', designation: 'Associate Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Ajay Kumar Jha', email: 'ajay.jha@domae.edu.np', password: 'teacher123', contact: '+977-1-5521611', designation: 'Associate Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Prashant Kumar Ghimire', email: 'prashant.ghimire@domae.edu.np', password: 'teacher123', contact: '+977-1-5548151', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Sanjeev Maharjan', email: 'sanjeev.maharjan@domae.edu.np', password: 'teacher123', contact: '+977-1-5521611', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Bijendra Prajapati', email: 'bijendra.prajapati@domae.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Anita Prajapati', email: 'anita.prajapati@domae.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Hari Bahadur Dura', email: 'hari.dura@domae.edu.np', password: 'teacher123', contact: '+977-9860912201', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Sanjaya Neupane', email: 'sanjaya.neupane@domae.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Tek Raj Subedi', email: 'tek.subedi@domae.edu.np', password: 'teacher123', contact: '+977-1-5521611', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Neeraj Adhikari', email: 'neeraj.adhikari@domae.edu.np', password: 'teacher123', contact: '+977-9849221378', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Navin K Jha', email: 'navin.jha@domae.edu.np', password: 'teacher123', contact: '+977-9841273646', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Aayush Bhattarai', email: 'aayush.bhattarai@domae.edu.np', password: 'teacher123', contact: '+977-9825106263', designation: 'Assistant Professor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Ramesh Chaudhary', email: 'ramesh.chaudhary@domae.edu.np', password: 'teacher123', contact: '+977-1-4335002', designation: 'Instructor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Bal Prusottam Shakya', email: 'bal.shakya@domae.edu.np', password: 'teacher123', contact: '+977-1-4281997', designation: 'Instructor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Govinda Maharjan', email: 'govinda.maharjan@domae.edu.np', password: 'teacher123', contact: '+977-1-4332961', designation: 'Chief Instructor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Kabir Maharjan', email: 'kabir.maharjan@domae.edu.np', password: 'teacher123', contact: '+977-1-4335002', designation: 'Instructor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Bal Mukunda Shrestha', email: 'bal.shrestha@domae.edu.np', password: 'teacher123', contact: '+977-1-4335002', designation: 'Instructor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Gopal Pote Shrestha', email: 'gopal.shrestha@domae.edu.np', password: 'teacher123', contact: '+977-1-4335002', designation: 'Instructor', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Ms. Yasodha Adhikari', email: 'yasodha.adhikari@domae.edu.np', password: 'teacher123', contact: '+977-1-5542054', designation: 'Administrator', department_code: 'DOMAE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+
+      // === DOECE — Department of Electronics and Computer Engineering ===
+      { name: 'Prof. Dr. Subarna Shakya', email: 'subarna.shakya@doece.edu.np', password: 'teacher123', contact: '9851032303', designation: 'Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Prof. Dr. Ram Krishana Maharjan', email: 'ram.maharjan@doece.edu.np', password: 'teacher123', contact: '9851232355', designation: 'Professor', department_code: 'DOECE', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
+      { name: 'Dr. Arun Kumar Timalsina', email: 'arun.timalsina@doece.edu.np', password: 'teacher123', contact: '9851148555', designation: 'Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Jyoti Tandukar', email: 'jyoti.tandukar@doece.edu.np', password: 'teacher123', contact: '9851026199', designation: 'Associate Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Surendra Shrestha', email: 'surendra.shrestha@doece.edu.np', password: 'teacher123', contact: '9851198713', designation: 'Associate Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Dibakar Raj Pant', email: 'dibakar.pant@doece.edu.np', password: 'teacher123', contact: '9841500525', designation: 'Associate Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Sanjeeb Prasad Panday', email: 'sanjeeb.panday@doece.edu.np', password: 'teacher123', contact: '9840052621', designation: 'Associate Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Nanda Bikram Adhikari', email: 'nanda.adhikari@doece.edu.np', password: 'teacher123', contact: '9841741053', designation: 'Associate Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Anand Kumar Sah', email: 'anand.sah@doece.edu.np', password: 'teacher123', contact: '9849664988', designation: 'Associate Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Sharad Kumar Ghimire', email: 'sharad.ghimire@doece.edu.np', password: 'teacher123', contact: '9841284474', designation: 'Associate Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Daya Sagar Baral', email: 'daya.baral@doece.edu.np', password: 'teacher123', contact: '9851049546', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Babu R. Dawadi', email: 'babu.dawadi@doece.edu.np', password: 'teacher123', contact: '9841340354', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Aman Shakya', email: 'aman.shakya@doece.edu.np', password: 'teacher123', contact: '9841218877', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Basanta Joshi', email: 'basanta.joshi@doece.edu.np', password: 'teacher123', contact: '9851190040', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Bibha Sthapit', email: 'bibha.sthapit@doece.edu.np', password: 'teacher123', contact: '9841340250', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Jitendra Kumar Manandhar', email: 'jitendra.manandhar@doece.edu.np', password: 'teacher123', contact: '9841291845', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Ranju Kumari Shiwakoti', email: 'ranju.shiwakoti@doece.edu.np', password: 'teacher123', contact: '9851233734', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Suman Sharma', email: 'suman.sharma@doece.edu.np', password: 'teacher123', contact: '9851081030', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Banshee Ram Pradhan', email: 'banshee.pradhan@doece.edu.np', password: 'teacher123', contact: '9841317451', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Loknath Regmi', email: 'loknath.regmi@doece.edu.np', password: 'teacher123', contact: '9851176568', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Prakash Chandra Prasad', email: 'prakash.prasad@doece.edu.np', password: 'teacher123', contact: '9840143772', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
+      { name: 'Santosh Giri', email: 'santosh.giri@doece.edu.np', password: 'teacher123', contact: '9846269053', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Nishchal Acharya', email: 'nishchal.acharya@doece.edu.np', password: 'teacher123', contact: '9841280247', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Sanjivan Satyal', email: 'sanjivan.satyal@doece.edu.np', password: 'teacher123', contact: '9847376464', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Dr. Ganesh Gautam', email: 'ganesh.gautam@doece.edu.np', password: 'teacher123', contact: '9851054980', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Anku Jaiswal', email: 'anku.jaiswal@doece.edu.np', password: 'teacher123', contact: '9849336528', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Anuj Ghimire', email: 'anuj.ghimire@doece.edu.np', password: 'teacher123', contact: '9851254079', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'dhod', max_hours_per_week: 15 },
+      { name: 'Bikal Adhikari', email: 'bikal.adhikari@doece.edu.np', password: 'teacher123', contact: '9846518168', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Anila Kansakar', email: 'anila.kansakar@doece.edu.np', password: 'teacher123', contact: '9843760911', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Jalauddin Mansur', email: 'jalauddin.mansur@doece.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Pravin Sangroula', email: 'pravin.sangroula@doece.edu.np', password: 'teacher123', contact: '', designation: 'Assistant Professor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Kamal Prasad Nepal', email: 'kamal.nepal@doece.edu.np', password: 'teacher123', contact: '9851026608', designation: 'Senior Instructor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Suresh Jha', email: 'suresh.jha@doece.edu.np', password: 'teacher123', contact: '9851189597', designation: 'Instructor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Deepak Lal Shrestha', email: 'deepak.shrestha@doece.edu.np', password: 'teacher123', contact: '9851084380', designation: 'Instructor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
+      { name: 'Ram Ekwal Yadav', email: 'ram.yadav@doece.edu.np', password: 'teacher123', contact: '9841563290', designation: 'Assistant Instructor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
     ];
 
     for (const t of teachersData) {
@@ -514,11 +609,21 @@ async function seed() {
     console.log(`${teachersData.length} teachers seeded`);
 
     console.log('\nSeed completed!');
-    console.log('Login credentials:');
-    const deptList = ['doasce', 'doece', 'domae', 'doee', 'doce', 'doa'];
-    for (const d of deptList) {
-      console.log(`  ${d}: hod@${d}.edu.np / hod123, dhod@${d}.edu.np / dhod123, teacher@${d}.edu.np / teacher123`);
+    console.log('Teacher count per department:');
+    const deptCounts = {};
+    for (const t of teachersData) {
+      deptCounts[t.department_code] = (deptCounts[t.department_code] || 0) + 1;
     }
+    for (const [code, count] of Object.entries(deptCounts)) {
+      console.log(`  ${code}: ${count} teachers`);
+    }
+    console.log('\nLogin credentials (password: teacher123 for all):');
+    console.log('  DOASCE: hod@doasce.edu.np / dhod@doasce.edu.np / teacher@doasce.edu.np');
+    console.log('  DOEE: hod@doee.edu.np / dhod@doee.edu.np / teacher@doee.edu.np');
+    console.log('  DOCE: hod@doce.edu.np / dhod@doce.edu.np / teacher@doce.edu.np');
+    console.log('  DOA: ashim.bajracharya@doa.edu.np (hod) / anjana.shrestha@doa.edu.np (dhod)');
+    console.log('  DOMAE: sudip.bhattrai@domae.edu.np (hod) / laxman.motra@domae.edu.np (dhod) / kamal.darlami@domae.edu.np (dhod)');
+    console.log('  DOECE: ram.maharjan@doece.edu.np (hod) / prakash.prasad@doece.edu.np (dhod) / anuj.ghimire@doece.edu.np (dhod)');
 
     process.exit(0);
   } catch (err) {

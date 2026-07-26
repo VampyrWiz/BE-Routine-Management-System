@@ -38,8 +38,17 @@ export function AuthProvider({ children }) {
     setTeacher(null);
   };
 
+  // Replaces the stored teacher object in both state and localStorage after a
+  // successful profile update so the UI reflects changes immediately without
+  // requiring the user to log out and back in. The profile page calls this with
+  // the response from PUT /api/auth/profile.
+  const updateTeacher = (data) => {
+    localStorage.setItem('teacher', JSON.stringify(data));
+    setTeacher(data);
+  };
+
   return (
-    <AuthContext.Provider value={{ teacher, loading, login, logout }}>
+    <AuthContext.Provider value={{ teacher, loading, login, logout, updateTeacher }}>
       {children}
     </AuthContext.Provider>
   );

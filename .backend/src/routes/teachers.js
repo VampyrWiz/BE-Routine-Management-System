@@ -25,8 +25,18 @@ router.get('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
 });
 
 // POST /api/teachers — Create a new teacher (HoD only).
+// If no password is provided, one is auto-generated from the teacher's first
+// name + "123" (e.g. "Aman Shakya" → "aman123") so the teacher receives a
+// predictable default credential they can change via the profile page later.
+// Common honorifics (Dr, Prof, etc.) are stripped so "Dr Aman Shakya" still
+// yields "aman123" rather than "dr123".
 router.post('/', protect, allowRoles('hod'), async (req, res) => {
   try {
+    if (!req.body.password && req.body.name) {
+      const parts = req.body.name.trim().split(/\s+/);
+      const first = parts.find(w => !/^(dr|prof|mr|mrs|ms|er|engr)\.?$/i.test(w)) || parts[0];
+      req.body.password = first.toLowerCase() + '123';
+    }
     const teacher = await Teacher.create(req.body);
     res.status(201).json(teacher);
   } catch (err) {

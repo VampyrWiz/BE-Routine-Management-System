@@ -16,6 +16,7 @@ const teacherSchema = new mongoose.Schema({
   designation: { type: String, required: true },
   department_code: { type: String, required: true },
   subject_codes: [{ type: String }],
+  subject_taught: [{ type: String }],
   role: { type: String, enum: ['hod', 'dhod', 'teacher'], default: 'teacher' },
   max_hours_per_week: { type: Number, default: 15 },
 }, { timestamps: true });

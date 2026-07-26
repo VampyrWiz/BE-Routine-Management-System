@@ -11,6 +11,9 @@ const navItems = [
   { path: '/departments', label: 'Departments', icon: '🏛️', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/routines', label: 'Routines', icon: '📅', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/approvals', label: 'Approvals', icon: '✅', roles: ['hod', 'dhod', 'teacher'] },
+  // Profile is available to every role so teachers can update their own
+  // contact info and password without involving the HoD.
+  { path: '/profile', label: 'Profile', icon: '👤', roles: ['hod', 'dhod', 'teacher'] },
 ];
 
 export default function Sidebar({ activePath, onNavigate }) {

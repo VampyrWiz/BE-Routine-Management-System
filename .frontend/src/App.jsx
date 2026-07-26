@@ -11,6 +11,9 @@ import Programs from './pages/Programs/Programs';
 import Departments from './pages/Departments/Departments';
 import Routines from './pages/Routines/Routines';
 import Approvals from './pages/Approvals/Approvals';
+// Profile page — allows any authenticated user to edit their own account
+// details (name, email, contact, designation) and change their password.
+import Profile from './pages/Profile/Profile';
 
 // AppLayout wraps every authenticated page: ProtectedRoute checks auth + role first,
 // then Layout renders the sidebar + topbar shell around the page's children.
@@ -37,6 +40,9 @@ export default function App() {
       <Route path="/departments" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Departments /></AppLayout>} />
       <Route path="/routines" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Routines /></AppLayout>} />
       <Route path="/approvals" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Approvals /></AppLayout>} />
+      {/* Profile is accessible to all authenticated roles — every teacher
+          should be able to update their own contact info and password. */}
+      <Route path="/profile" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Profile /></AppLayout>} />
       {/* Catch-all: any unknown route redirects to dashboard */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
