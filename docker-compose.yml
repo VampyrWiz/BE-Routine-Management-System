@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: beroutine-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: beroutine
+
+  backend:
+    build: .backend
+    container_name: beroutine-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/beroutine
+      - JWT_SECRET=be-routine-secret-key-2024
+    depends_on:
+      - mongo
+
+  seed:
+    build: .backend
+    container_name: beroutine-seed
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/beroutine
+      - JWT_SECRET=be-routine-secret-key-2024
+    depends_on:
+      - mongo
+    command: npm run seed
+
+  frontend:
+    build: .frontend
+    container_name: beroutine-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:

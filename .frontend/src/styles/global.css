@@ -1,0 +1,651 @@
+/* ===== CSS Reset ===== */
+/* Remove default margins/padding and use border-box so padding
+   does not add to element widths — makes sizing predictable. */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== Dark Theme — Gruvbox Dark Palette ===== */
+/* These CSS variables define the entire colour scheme when
+   data-theme="dark" is set on <html>. The palette is based on
+   Gruvbox dark: warm, high-contrast, easy on the eyes. */
+[data-theme="dark"] {
+  --bg-primary: #1d2021;
+  --bg-secondary: #282828;
+  --bg-tertiary: #3c3836;
+  --bg-hover: #504945;
+  --border-color: #504945;
+  --text-primary: #ebdbb2;
+  --text-secondary: #a89984;
+  --text-muted: #7c6f64;
+  --accent: #458588;
+  --accent-hover: #83a598;
+  --success: #98971a;
+  --warning: #d79921;
+  --danger: #cc241d;
+  --orange: #d65d0e;
+  --purple: #b16286;
+  --aqua: #689d6a;
+  --fg-light: #fbf1c7;
+}
+
+/* ===== Light Theme — Gruvbox Light Palette ===== */
+/* The same variable names but mapped to Gruvbox light colours,
+   providing a bright, paper-like alternative for daytime use. */
+[data-theme="light"] {
+  --bg-primary: #fbf1c7;
+  --bg-secondary: #f9f5d7;
+  --bg-tertiary: #ebdbb2;
+  --bg-hover: #d5c4a1;
+  --border-color: #d5c4a1;
+  --text-primary: #3c3836;
+  --text-secondary: #504945;
+  --text-muted: #928374;
+  --accent: #458588;
+  --accent-hover: #076678;
+  --success: #98971a;
+  --warning: #d79921;
+  --danger: #cc241d;
+  --orange: #d65d0e;
+  --purple: #b16286;
+  --aqua: #689d6a;
+  --fg-light: #fbf1c7;
+}
+
+/* ===== Layout Variables ===== */
+/* Fixed dimensions for the sidebar width and topbar height,
+   used consistently by all layout components. */
+:root {
+  --sidebar-width: 260px;
+  --header-height: 56px;
+}
+
+/* ===== Body & Typography Defaults ===== */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* Ensure form controls inherit the app font instead of browser default */
+input, select, textarea, button {
+  font-family: inherit;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* ===== Scrollbar Styling ===== */
+/* Custom scrollbar colours to match the theme instead of the OS default */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ===== Text Selection ===== */
+::selection {
+  background: #45858866;
+  color: var(--fg-light);
+}
+
+/* ===== Layout Components ===== */
+/* The top-level flex container that holds sidebar + main area side by side */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== Sidebar ===== */
+/* Fixed-position sidebar that stays visible while the main content scrolls.
+   Uses the --sidebar-width variable for consistent sizing. */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h2 {
+  font-size: 18px;
+  color: var(--orange);
+  font-weight: 700;
+}
+
+.sidebar-header span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.sidebar-nav {
+  padding: 12px 0;
+}
+
+/* ===== Navigation Items ===== */
+/* Buttons styled as nav links with a hover effect and an active
+   state that uses an orange right border as a visual indicator. */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-item:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--bg-tertiary);
+  color: var(--orange);
+  border-right: 2px solid var(--orange);
+}
+
+.nav-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+}
+
+/* ===== Main Content Area ===== */
+/* Shifts content right by the sidebar width so it doesn't overlap the fixed sidebar */
+.main-area {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+}
+
+/* ===== Topbar ===== */
+/* Sticky header bar showing the app title, teacher info, theme toggle, and logout button */
+.topbar {
+  height: var(--header-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.teacher-info {
+  text-align: right;
+}
+
+.teacher-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.teacher-role {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ===== Theme Toggle Button ===== */
+.theme-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.theme-btn:hover {
+  background: var(--bg-hover);
+}
+
+/* ===== Logout Button ===== */
+.logout-btn {
+  padding: 6px 16px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--fg-light);
+}
+
+.topbar-title {
+  color: var(--orange);
+}
+
+/* ===== Page Content Wrapper ===== */
+.page-content {
+  padding: 24px;
+}
+
+/* ===== Cards ===== */
+/* Reusable container for grouping related content with a subtle border and rounded corners */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+/* ===== Statistics Cards ===== */
+/* A responsive grid of stat cards that auto-wrap to fill available width */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.stat-card h3 {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--orange);
+}
+
+/* ===== Tables ===== */
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+tr:hover td {
+  background: var(--bg-tertiary);
+}
+
+/* ===== Buttons ===== */
+/* Base button styles with semantic colour variants for primary, success, danger, and warning actions */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--fg-light);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-success {
+  background: var(--success);
+  color: var(--fg-light);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--fg-light);
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: var(--bg-primary);
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* ===== Form Controls ===== */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+select.form-control {
+  cursor: pointer;
+}
+
+/* Two-column form row layout for paired fields */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ===== Modal / Overlay ===== */
+/* Full-screen dark overlay with a centred modal panel for dialogs and forms */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ===== Badges ===== */
+/* Small rounded pills used to indicate roles (hod/dhod/teacher)
+   and approval statuses (pending/approved/rejected). Each variant
+   has its own colour combination for quick visual scanning. */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-hod {
+  background: #45858833;
+  color: #83a598;
+}
+
+.badge-dhod {
+  background: #d7992133;
+  color: #d79921;
+}
+
+.badge-teacher {
+  background: #98971a33;
+  color: #98971a;
+}
+
+.badge-pending {
+  background: #d7992133;
+  color: #d79921;
+}
+
+.badge-approved {
+  background: #98971a33;
+  color: #98971a;
+}
+
+.badge-rejected {
+  background: #cc241d33;
+  color: #cc241d;
+}
+
+/* ===== Login Page ===== */
+/* Centred full-viewport layout for the authentication card */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+}
+
+.login-card h1 {
+  color: var(--orange);
+}
+
+.login-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-card h1 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.login-card p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.login-card .btn {
+  width: 100%;
+  justify-content: center;
+  padding: 10px;
+  font-size: 15px;
+}
+
+/* ===== Empty State ===== */
+/* Centred placeholder shown when a list or table has no data */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+/* ===== Schedule Grid ===== */
+/* A timetable layout: first column is time slots, remaining 5 columns
+   are weekdays (Mon–Fri). Uses a collapsed 1px gap to create grid lines. */
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(5, 1fr);
+  gap: 1px;
+  background: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.schedule-header {
+  background: var(--bg-tertiary);
+  padding: 10px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.schedule-time {
+  background: var(--bg-tertiary);
+  padding: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.schedule-cell {
+  background: var(--bg-secondary);
+  padding: 8px;
+  min-height: 60px;
+  font-size: 12px;
+}
+
+.schedule-cell .slot-subject {
+  font-weight: 600;
+  color: var(--orange);
+}
+
+.schedule-cell .slot-teacher {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.schedule-cell .slot-room {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ===== Alert Variants ===== */
+/* Notification banners for info, success, and error messages.
+   Each variant uses the same colour as its corresponding button/badge. */
+.alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.alert-info {
+  background: #45858833;
+  border: 1px solid #458588;
+  color: #83a598;
+}
+
+.alert-success {
+  background: #98971a33;
+  border: 1px solid #98971a;
+  color: #98971a;
+}
+
+.alert-danger {
+  background: #cc241d33;
+  border: 1px solid #cc241d;
+  color: #cc241d;
+}
