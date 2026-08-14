@@ -10,17 +10,36 @@ export default function Teachers() {
   // editData is null for "add" mode, or the teacher object for "edit" mode
   const [editData, setEditData] = useState(null);
   // form holds all input values; resetForm() restores defaults for "add" mode
-  const [form, setForm] = useState({ name: '', email: '', password: '', contact: '', designation: '', department_code: 'BCT', role: 'teacher', max_hours_per_week: 15 });
+  const [form, setForm] = useState({ name: '', email: '', password: '', contact: '', designation: '', department_code: 'BCT', role: 'teacher', max_hours_per_week: 15, programs: [] });
+  // programs list populates the programs checkboxes in the modal
+  const [programs, setPrograms] = useState([]);
 
   // Fetch teacher list once on mount; no dependency on teacher because the list
   // is read-only data that doesn't change when the session user changes
   useEffect(() => {
     fetchTeachers();
+    fetchPrograms();
   }, []);
 
   const fetchTeachers = async () => {
     const { data } = await api.get('/teachers');
     setTeachers(data);
+  };
+
+  // fetchPrograms loads the program codes used for the Programs checkboxes
+  const fetchPrograms = async () => {
+    try { const { data } = await api.get('/programs'); setPrograms(data); } catch {}
+  };
+
+  // toggleProgram adds/removes a program code from the teacher's programs
+  // array — used by the checkbox group in the modal.
+  const toggleProgram = (code) => {
+    setForm(prev => ({
+      ...prev,
+      programs: prev.programs.includes(code)
+        ? prev.programs.filter(p => p !== code)
+        : [...prev.programs, code],
+    }));
   };
 
   // handleSubmit is shared by both create and edit:
@@ -51,7 +70,7 @@ export default function Teachers() {
   // and switches the modal to "edit" mode (editData is truthy)
   const handleEdit = (t) => {
     setEditData(t);
-    setForm({ name: t.name, email: t.email, password: '', contact: t.contact || '', designation: t.designation, department_code: t.department_code, role: t.role, subject_codes: t.subject_codes || [], max_hours_per_week: t.max_hours_per_week });
+    setForm({ name: t.name, email: t.email, password: '', contact: t.contact || '', designation: t.designation, department_code: t.department_code, role: t.role, subject_codes: t.subject_codes || [], max_hours_per_week: t.max_hours_per_week, programs: t.programs || [] });
     setShowModal(true);
   };
 
@@ -64,7 +83,7 @@ export default function Teachers() {
 
   // resetForm restores the default form values; used when opening the modal for "add"
   const resetForm = () => {
-    setForm({ name: '', email: '', password: '', contact: '', designation: '', department_code: 'BCT', role: 'teacher', max_hours_per_week: 15 });
+    setForm({ name: '', email: '', password: '', contact: '', designation: '', department_code: 'BCT', role: 'teacher', max_hours_per_week: 15, programs: [] });
   };
 
   // Maps role strings to CSS class names for colored badge display
@@ -180,6 +199,21 @@ export default function Teachers() {
               <div className="form-group">
                 <label>Max Hours/Week</label>
                 <input className="form-control" type="number" value={form.max_hours_per_week} onChange={e => setForm({ ...form, max_hours_per_week: Number(e.target.value) })} />
+              </div>
+              {/* Programs: checkboxes of all program codes. The routine form
+                  filters its teacher dropdown by these, so a teacher must be
+                  tagged with the program(s) they teach to be assignable. */}
+              <div className="form-group">
+                <label>Programs</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, padding: '8px 0' }}>
+                  {programs.map(p => (
+                    <label key={p.code} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={form.programs.includes(p.code)} onChange={() => toggleProgram(p.code)} />
+                      {p.code}
+                    </label>
+                  ))}
+                  {programs.length === 0 && <span style={{ color: 'var(--text-secondary)' }}>No programs available</span>}
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }} onClick={() => setShowModal(false)}>Cancel</button>

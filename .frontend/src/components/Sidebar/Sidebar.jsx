@@ -9,7 +9,8 @@ const navItems = [
   { path: '/subjects', label: 'Subjects', icon: '📚', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/programs', label: 'Programs', icon: '🎓', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/departments', label: 'Departments', icon: '🏛️', roles: ['hod', 'dhod', 'teacher'] },
-  { path: '/routines', label: 'Routines', icon: '📅', roles: ['hod', 'dhod', 'teacher'] },
+  { path: '/routines', label: 'Teacher Schedule', icon: '📅', roles: ['hod', 'dhod', 'teacher'] },
+  { path: '/section-schedule', label: 'Section Schedule', icon: '🗓️', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/approvals', label: 'Approvals', icon: '✅', roles: ['hod', 'dhod', 'teacher'] },
   // Profile is available to every role so teachers can update their own
   // contact info and password without involving the HoD.

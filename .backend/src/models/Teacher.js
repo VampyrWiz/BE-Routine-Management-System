@@ -17,6 +17,10 @@ const teacherSchema = new mongoose.Schema({
   department_code: { type: String, required: true },
   subject_codes: [{ type: String }],
   subject_taught: [{ type: String }],
+  // programs lists the program codes (e.g. "BCT", "BEX") the teacher teaches
+  // in. It is used to filter the teacher dropdown in the routine form so that
+  // a department running multiple programs only shows relevant faculty.
+  programs: [{ type: String }],
   role: { type: String, enum: ['hod', 'dhod', 'teacher'], default: 'teacher' },
   max_hours_per_week: { type: Number, default: 15 },
 }, { timestamps: true });

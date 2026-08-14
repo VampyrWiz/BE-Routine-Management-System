@@ -1,8 +1,13 @@
 const mongoose = require('mongoose');
 
 // Routine schema — represents a single time-slot assignment for a teacher.
-// day is an enum restricted to the seven days of the week so that invalid
-// values are rejected at the database level.
+// day is an enum restricted to Monday–Friday (the teaching week).
+// subject_id references Subject (ObjectId + ref) so the course code, semester
+// and program can be derived from the curriculum instead of typed manually.
+// course_code and semester are still stored denormalized so that old entries
+// and non-subject-linked routines keep working without a join.
+// program stores the program code (e.g. "BCT", "BEX") the routine belongs to,
+// which is used to scope course and teacher selection in the UI.
 // teacher_id references Teacher (ObjectId + ref) so that populate() can
 // resolve teacher name/email/designation in a single query.
 // type distinguishes Lecture / Tutorial / Practical so the system can
@@ -12,13 +17,18 @@ const mongoose = require('mongoose');
 // The department field replicates the teacher's department so that
 // DHoD-level queries can filter routines without a join.
 const routineSchema = new mongoose.Schema({
-  day: { type: String, enum: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], required: true },
+  day: { type: String, enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], required: true },
   startTime: { type: String, required: true },
   endTime: { type: String, required: true },
   course_code: { type: String, required: true },
+  subject_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', default: null },
+  program: { type: String, default: '' },
   teacher_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher', required: true },
-  section: { type: String, default: 'A' },
-  room: { type: String, default: '' },
+  section: { type: String, default: '' },
+  // group is the batch letter inside a section (e.g. "A" within section "AB").
+  // Section names are letter pairs, so the group letters always come from
+  // the section name itself.
+  group: { type: String, default: '' },
   type: { type: String, enum: ['L', 'T', 'P'], default: 'L' },
   semester: { type: String, required: true },
   department: { type: String, required: true },

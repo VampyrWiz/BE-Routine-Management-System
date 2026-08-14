@@ -10,6 +10,9 @@ import Subjects from './pages/Subjects/Subjects';
 import Programs from './pages/Programs/Programs';
 import Departments from './pages/Departments/Departments';
 import Routines from './pages/Routines/Routines';
+// Section Schedule — read-only weekly timetable grouped per section, built
+// from the same routine entries the teacher schedule manages.
+import SectionSchedule from './pages/SectionSchedule/SectionSchedule';
 import Approvals from './pages/Approvals/Approvals';
 // Profile page — allows any authenticated user to edit their own account
 // details (name, email, contact, designation) and change their password.
@@ -39,6 +42,7 @@ export default function App() {
       <Route path="/programs" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Programs /></AppLayout>} />
       <Route path="/departments" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Departments /></AppLayout>} />
       <Route path="/routines" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Routines /></AppLayout>} />
+      <Route path="/section-schedule" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><SectionSchedule /></AppLayout>} />
       <Route path="/approvals" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Approvals /></AppLayout>} />
       {/* Profile is accessible to all authenticated roles — every teacher
           should be able to update their own contact info and password. */}

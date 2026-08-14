@@ -15,14 +15,14 @@ const departments = [
   { code: 'DOA', fullName: 'Department of Architecture' },
 ];
 const programs = [
-  { code: 'BCE', fullName: 'Bachelor in Civil Engineering', department_code: 'DOCE', duration_years: 4 },
-  { code: 'BAR', fullName: 'Bachelor in Architecture', department_code: 'DOA', duration_years: 5 },
-  { code: 'BEL', fullName: 'Bachelor in Electrical Engineering', department_code: 'DOEE', duration_years: 4 },
-  { code: 'BEX', fullName: 'Bachelor in Electronics, Communication and Information Engineering', department_code: 'DOECE', duration_years: 4 },
-  { code: 'BCT', fullName: 'Bachelor in Computer Engineering', department_code: 'DOECE', duration_years: 4 },
-  { code: 'BME', fullName: 'Bachelor in Mechanical Engineering', department_code: 'DOMAE', duration_years: 4 },
-  { code: 'BAE', fullName: 'Bachelor in Aerospace Engineering', department_code: 'DOMAE', duration_years: 4 },
-  { code: 'BCH', fullName: 'Bachelor in Chemical Engineering', department_code: 'DOASCE', duration_years: 4 },
+  { code: 'BCE', fullName: 'Bachelor in Civil Engineering', department_code: 'DOCE', duration_years: 4, sections: ['AB', 'CD', 'EF', 'GH'] },
+  { code: 'BAR', fullName: 'Bachelor in Architecture', department_code: 'DOA', duration_years: 5, sections: ['AB'] },
+  { code: 'BEL', fullName: 'Bachelor in Electrical Engineering', department_code: 'DOEE', duration_years: 4, sections: ['AB', 'CD'] },
+  { code: 'BEX', fullName: 'Bachelor in Electronics, Communication and Information Engineering', department_code: 'DOECE', duration_years: 4, sections: ['AB'] },
+  { code: 'BCT', fullName: 'Bachelor in Computer Engineering', department_code: 'DOECE', duration_years: 4, sections: ['AB', 'CD'] },
+  { code: 'BME', fullName: 'Bachelor in Mechanical Engineering', department_code: 'DOMAE', duration_years: 4, sections: ['AB'] },
+  { code: 'BAE', fullName: 'Bachelor in Aerospace Engineering', department_code: 'DOMAE', duration_years: 4, sections: ['AB'] },
+  { code: 'BCH', fullName: 'Bachelor in Chemical Engineering', department_code: 'DOASCE', duration_years: 4, sections: ['AB'] },
 ];
 const bceSubjects = [
   { code: 'ENSH 101', title: 'Engineering Mathematics I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOCE', remark: '' },
@@ -602,6 +602,14 @@ async function seed() {
       { name: 'Deepak Lal Shrestha', email: 'deepak.shrestha@doece.edu.np', password: 'teacher123', contact: '9851084380', designation: 'Instructor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
       { name: 'Ram Ekwal Yadav', email: 'ram.yadav@doece.edu.np', password: 'teacher123', contact: '9841563290', designation: 'Assistant Instructor', department_code: 'DOECE', subject_codes: [], role: 'teacher', max_hours_per_week: 15 },
     ];
+
+    // DOECE runs two programs (BCT and BEX). Assign both to its teachers by
+    // default so the program-filtered teacher dropdown in the routine form
+    // has data to work with; the HoD can narrow this per teacher later via
+    // the Teachers page.
+    for (const t of teachersData) {
+      if (t.department_code === 'DOECE') t.programs = ['BCT', 'BEX'];
+    }
 
     for (const t of teachersData) {
       await Teacher.create(t);

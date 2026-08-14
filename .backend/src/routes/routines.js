@@ -1,10 +1,32 @@
 const express = require('express');
 const Routine = require('../models/Routine');
+const Subject = require('../models/Subject');
 const Teacher = require('../models/Teacher');
 const { protect } = require('../middleware/auth');
 const { allowRoles, hodOnly } = require('../middleware/roles');
 
 const router = express.Router();
+
+// resolveSubject looks up the Subject referenced by subject_id and derives
+// course_code, semester and program from the curriculum document, so users
+// never type codes manually. If a program is supplied in the payload it is
+// validated against the subject's program list (a subject can be shared
+// across programs via its comma-separated program field).
+const resolveSubject = async (data) => {
+  if (!data.subject_id) return data;
+  const subject = await Subject.findById(data.subject_id);
+  if (!subject) throw Object.assign(new Error('Subject not found'), { status: 400 });
+  if (data.program) {
+    const offeredIn = (subject.program || '').split(',').map(s => s.trim().toUpperCase());
+    if (!offeredIn.includes(data.program.trim().toUpperCase())) {
+      throw Object.assign(new Error(`Subject ${subject.code} is not offered in ${data.program}`), { status: 400 });
+    }
+  }
+  data.course_code = subject.code;
+  data.semester = subject.semester;
+  if (!data.program) data.program = subject.program ? subject.program.split(',')[0].trim() : '';
+  return data;
+};
 
 // GET /api/routines — List routines with role-based filtering.
 // Teachers can only see their own routines (filter by teacher_id).
@@ -25,7 +47,9 @@ router.get('/', protect, async (req, res) => {
     if (req.query.semester) filter.semester = req.query.semester;
     if (req.query.department) filter.department = req.query.department;
     if (req.query.teacher_id) filter.teacher_id = req.query.teacher_id;
-    const routines = await Routine.find(filter).populate('teacher_id', 'name email designation');
+    const routines = await Routine.find(filter)
+      .populate('teacher_id', 'name email designation')
+      .populate('subject_id', 'code title semester program');
     res.json(routines);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -67,7 +91,14 @@ router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
       });
     }
 
-    const routine = await Routine.create({ ...req.body, isApproved: req.teacher.role === 'hod' });
+    const routineData = await resolveSubject({ ...req.body });
+    const routine = await Routine.create({
+      ...routineData,
+      // The department is taken from the teacher's own department so the
+      // DHoD-level routine filtering works without the client supplying it.
+      department: routineData.department || teacher.department_code,
+      isApproved: req.teacher.role === 'hod',
+    });
     res.status(201).json(routine);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -75,13 +106,16 @@ router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
 });
 
 // PUT /api/routines/:id — Update a routine entry.
+// Subject-derived fields (course_code, semester, program) are re-resolved
+// whenever subject_id is included in the payload.
 router.put('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
   try {
-    const routine = await Routine.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const routineData = await resolveSubject({ ...req.body });
+    const routine = await Routine.findByIdAndUpdate(req.params.id, routineData, { new: true });
     if (!routine) return res.status(404).json({ message: 'Routine not found' });
     res.json(routine);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(err.status || 400).json({ message: err.message });
   }
 });
 

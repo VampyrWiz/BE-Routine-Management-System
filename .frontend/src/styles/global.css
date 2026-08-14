@@ -617,11 +617,6 @@ select.form-control {
   color: var(--text-secondary);
 }
 
-.schedule-cell .slot-room {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
 /* ===== Alert Variants ===== */
 /* Notification banners for info, success, and error messages.
    Each variant uses the same colour as its corresponding button/badge. */

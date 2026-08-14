@@ -117,7 +117,6 @@ export default function Dashboard() {
                   <th>Time</th>
                   <th>Course</th>
                   <th>Type</th>
-                  <th>Room</th>
                 </tr>
               </thead>
               <tbody>
@@ -127,7 +126,6 @@ export default function Dashboard() {
                     <td>{r.startTime} - {r.endTime}</td>
                     <td>{r.course_code}</td>
                     <td>{r.type}</td>
-                    <td>{r.room || '-'}</td>
                   </tr>
                 ))}
               </tbody>
