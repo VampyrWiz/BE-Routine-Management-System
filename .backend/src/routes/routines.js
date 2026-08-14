@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Routine = require('../models/Routine');
 const Subject = require('../models/Subject');
 const Teacher = require('../models/Teacher');
@@ -12,6 +13,9 @@ const router = express.Router();
 // never type codes manually. If a program is supplied in the payload it is
 // validated against the subject's program list (a subject can be shared
 // across programs via its comma-separated program field).
+// A subject whose code or title mentions "Elective" is marked is_elective so
+// the handlers know the entry represents an elective block that may run as
+// multiple parallel options taught by different teachers.
 const resolveSubject = async (data) => {
   if (!data.subject_id) return data;
   const subject = await Subject.findById(data.subject_id);
@@ -25,7 +29,34 @@ const resolveSubject = async (data) => {
   data.course_code = subject.code;
   data.semester = subject.semester;
   if (!data.program) data.program = subject.program ? subject.program.split(',')[0].trim() : '';
+  data.is_elective = /elective/i.test(`${subject.code} ${subject.title}`);
   return data;
+};
+
+// computeHours returns the duration of a time slot in hours (e.g. "09:00"-
+// "10:30" -> 1.5). Used by the workload check for both regular and elective
+// entries.
+const computeHours = (startTime, endTime) => {
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  return (eh - sh) + (em - sm) / 60;
+};
+
+// assertWorkload rejects a schedule change if it would push a regular teacher
+// past max_hours_per_week. HoDs/DHoDs are never workload-limited because their
+// approval implies the schedule is acceptable.
+const assertWorkload = async (teacher, newHours) => {
+  if (teacher.role !== 'teacher') return;
+  const existingRoutines = await Routine.find({ teacher_id: teacher._id });
+  const totalHours = existingRoutines.reduce((sum, r) => sum + computeHours(r.startTime, r.endTime), 0);
+  if ((totalHours + newHours) > teacher.max_hours_per_week) {
+    const err = new Error(`Teacher ${teacher.name} would exceed ${teacher.max_hours_per_week}h/week. Need HoD approval.`);
+    err.requiresApproval = true;
+    err.currentHours = totalHours;
+    err.newHours = newHours;
+    err.maxHours = teacher.max_hours_per_week;
+    throw err;
+  }
 };
 
 // GET /api/routines — List routines with role-based filtering.
@@ -65,33 +96,77 @@ router.get('/', protect, async (req, res) => {
 // with requiresApproval: true, telling the frontend that an approval request
 // must be submitted first. If the creator is a HoD, isApproved is set to true
 // automatically because the HoD's action implies approval.
+// For elective courses the payload may carry electiveOptions (array of
+// { subject_name, teacher_id }) — one entry is created per option, all sharing
+// the same elective_group id so the block of parallel electives stays linked.
+// The workload check runs against every teacher listed in the options.
 router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
   try {
-    const teacher = await Teacher.findById(req.body.teacher_id);
-    if (!teacher) return res.status(404).json({ message: 'Teacher not found' });
+    const routineData = await resolveSubject({ ...req.body });
+    const newHours = computeHours(routineData.startTime, routineData.endTime);
 
-    const existingRoutines = await Routine.find({ teacher_id: req.body.teacher_id });
-    const totalHours = existingRoutines.reduce((sum, r) => {
-      const [sh, sm] = r.startTime.split(':').map(Number);
-      const [eh, em] = r.endTime.split(':').map(Number);
-      return sum + (eh - sh) + (em - sm) / 60;
-    }, 0);
-
-    const [sh, sm] = req.body.startTime.split(':').map(Number);
-    const [eh, em] = req.body.endTime.split(':').map(Number);
-    const newHours = (eh - sh) + (em - sm) / 60;
-
-    if (teacher.role === 'teacher' && (totalHours + newHours) > teacher.max_hours_per_week) {
-      return res.status(400).json({
-        message: `Teacher would exceed ${teacher.max_hours_per_week}h/week. Need HoD approval.`,
-        requiresApproval: true,
-        currentHours: totalHours,
-        newHours,
-        maxHours: teacher.max_hours_per_week,
-      });
+    // Elective block: a single time slot running several elective courses in
+    // parallel, each taught by its own teacher. Reject if the block would push
+    // any of those teachers past their weekly limit.
+    if (routineData.is_elective && Array.isArray(req.body.electiveOptions) && req.body.electiveOptions.length) {
+      const options = req.body.electiveOptions.filter(o => o.subject_name && o.teacher_id);
+      if (!options.length) {
+        return res.status(400).json({ message: 'Add at least one elective option with a subject name and teacher' });
+      }
+      for (const opt of options) {
+        const teacher = await Teacher.findById(opt.teacher_id);
+        if (!teacher) return res.status(404).json({ message: 'Teacher not found' });
+        try {
+          await assertWorkload(teacher, newHours);
+        } catch (err) {
+          if (err.requiresApproval) {
+            return res.status(400).json({
+              message: err.message,
+              requiresApproval: true,
+              currentHours: err.currentHours,
+              newHours,
+              maxHours: teacher.max_hours_per_week,
+            });
+          }
+          throw err;
+        }
+      }
+      const group = new mongoose.Types.ObjectId().toString();
+      const created = [];
+      for (const opt of options) {
+        const teacher = await Teacher.findById(opt.teacher_id);
+        created.push(await Routine.create({
+          ...routineData,
+          subject_name: opt.subject_name,
+          teacher_id: opt.teacher_id,
+          elective_group: group,
+          is_elective: true,
+          department: routineData.department || teacher.department_code,
+          isApproved: req.teacher.role === 'hod',
+        }));
+      }
+      return res.status(201).json(created);
     }
 
-    const routineData = await resolveSubject({ ...req.body });
+    // Regular single-teacher entry.
+    const teacher = await Teacher.findById(routineData.teacher_id);
+    if (!teacher) return res.status(404).json({ message: 'Teacher not found' });
+
+    try {
+      await assertWorkload(teacher, newHours);
+    } catch (err) {
+      if (err.requiresApproval) {
+        return res.status(400).json({
+          message: err.message,
+          requiresApproval: true,
+          currentHours: err.currentHours,
+          newHours,
+          maxHours: teacher.max_hours_per_week,
+        });
+      }
+      throw err;
+    }
+
     const routine = await Routine.create({
       ...routineData,
       // The department is taken from the teacher's own department so the
@@ -108,9 +183,40 @@ router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
 // PUT /api/routines/:id — Update a routine entry.
 // Subject-derived fields (course_code, semester, program) are re-resolved
 // whenever subject_id is included in the payload.
+// Editing an elective entry regenerates the whole elective block: every
+// option in the shared elective_group is replaced with the submitted
+// electiveOptions so day/time/section/options never drift out of sync.
 router.put('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
   try {
+    const existing = await Routine.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'Routine not found' });
+
     const routineData = await resolveSubject({ ...req.body });
+
+    if (routineData.is_elective && Array.isArray(req.body.electiveOptions) && req.body.electiveOptions.length) {
+      const options = req.body.electiveOptions.filter(o => o.subject_name && o.teacher_id);
+      if (!options.length) {
+        return res.status(400).json({ message: 'Add at least one elective option with a subject name and teacher' });
+      }
+      const group = existing.elective_group || new mongoose.Types.ObjectId().toString();
+      await Routine.deleteMany({ elective_group: group });
+      const updated = [];
+      for (const opt of options) {
+        const teacher = await Teacher.findById(opt.teacher_id);
+        if (!teacher) return res.status(404).json({ message: 'Teacher not found' });
+        updated.push(await Routine.create({
+          ...routineData,
+          subject_name: opt.subject_name,
+          teacher_id: opt.teacher_id,
+          elective_group: group,
+          is_elective: true,
+          department: routineData.department || teacher.department_code,
+          isApproved: req.teacher.role === 'hod',
+        }));
+      }
+      return res.json(updated);
+    }
+
     const routine = await Routine.findByIdAndUpdate(req.params.id, routineData, { new: true });
     if (!routine) return res.status(404).json({ message: 'Routine not found' });
     res.json(routine);

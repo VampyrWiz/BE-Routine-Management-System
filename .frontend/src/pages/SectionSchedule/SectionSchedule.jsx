@@ -136,14 +136,16 @@ export default function SectionSchedule() {
   };
 
   // Teacher abbreviations used in merged cells, collected for the legend.
+  // Elective blocks are always included (even a single-option elective)
+  // because their teacher codes carry the offered subject name too.
   const usedAbbrevs = new Map();
   for (const slot of timeSlots) {
     for (const day of DAYS) {
       for (const group of mergeEntries(forSlot(day, slot))) {
-        if (group.length > 1) {
+        if (group.length > 1 || group[0].is_elective) {
           for (const r of group) {
             const name = getTeacherName(r.teacher_id);
-            usedAbbrevs.set(getTeacherAbbrev(name), name);
+            usedAbbrevs.set(getTeacherAbbrev(name), { name, subject: r.subject_name });
           }
         }
       }
@@ -223,6 +225,7 @@ export default function SectionSchedule() {
                       return (
                         <td key={day} style={{ verticalAlign: 'top' }}>
                           {cells.map(entries => {
+                            const isElective = entries[0].is_elective;
                             const teachers = entries.map(r => getTeacherName(r.teacher_id));
                             const groups = [...new Set(entries.map(r => r.group).filter(Boolean))];
                             return (
@@ -232,12 +235,26 @@ export default function SectionSchedule() {
                                 <div style={{ fontSize: 12, marginTop: 2 }}>
                                   <span className={`badge ${entries[0].type === 'L' ? 'badge-approved' : entries[0].type === 'T' ? 'badge-pending' : 'badge-rejected'}`}>{entries[0].type}</span>
                                   {groups.length > 0 && <span style={{ marginLeft: 6, fontWeight: 600 }}>Grp {groups.join(', ')}</span>}
-                                  <span style={{ marginLeft: 6 }}>
-                                    {entries.length === 1
-                                      ? teachers[0]
-                                      : teachers.map(getTeacherAbbrev).join(' + ')}
-                                  </span>
+                                  {!isElective && (
+                                    <span style={{ marginLeft: 6 }}>
+                                      {entries.length === 1
+                                        ? teachers[0]
+                                        : teachers.map(getTeacherAbbrev).join(' + ')}
+                                    </span>
+                                  )}
                                 </div>
+                                {/* Elective block: one line per offered course,
+                                    shown as "NN (A)" — teacher abbreviation
+                                    plus the elective subject name. */}
+                                {isElective && (
+                                  <div style={{ fontSize: 12, marginTop: 2 }}>
+                                    {entries.map(r => (
+                                      <div key={r._id}>
+                                        <strong>{getTeacherAbbrev(getTeacherName(r.teacher_id))}</strong> ({r.subject_name || '?'})
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -263,9 +280,9 @@ export default function SectionSchedule() {
             </div>
             {usedAbbrevs.size > 0 && (
               <div>
-                {[...usedAbbrevs.entries()].map(([abbrev, name]) => (
+                {[...usedAbbrevs.entries()].map(([abbrev, info]) => (
                   <span key={abbrev} style={{ marginRight: 12 }}>
-                    <strong>{abbrev}</strong> = {name}
+                    <strong>{abbrev}</strong> = {info.name}{info.subject ? ` (${info.subject})` : ''}
                   </span>
                 ))}
               </div>

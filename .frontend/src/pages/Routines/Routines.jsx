@@ -9,10 +9,13 @@ const TYPES = ['L', 'T', 'P'];
 // Program → Year → Part drive which subjects (courses) are available, so the
 // user never types codes manually; the backend derives course_code, semester
 // and program from the chosen subject.
+// electiveOptions holds the parallel elective offerings for an elective slot
+// (each row = subject name + teacher), e.g. "A" -> NN, "B" -> MM, ...
 const INIT_FORM = {
   day: 'Monday', startTime: '06:00', endTime: '07:00',
   program: '', year: '', part: '', subject_id: '', course_code: '',
   teacher_id: '', section: '', group: '', type: 'L',
+  electiveOptions: [],
 };
 
 export default function Routines() {
@@ -126,6 +129,15 @@ export default function Routines() {
     (!form.part || s.part === Number(form.part))
   ).sort((a, b) => a.code.localeCompare(b.code));
 
+  // selectedSubject is the course currently chosen in the form; isElective is
+  // true when that course is an elective (code or title mentions "Elective"),
+  // in which case the single teacher select is replaced by the parallel
+  // elective options editor (one subject name + teacher per offered elective).
+  const selectedSubject = subjects.find(s => s._id === form.subject_id);
+  const isElective = selectedSubject
+    ? /elective/i.test(`${selectedSubject.code} ${selectedSubject.title}`)
+    : false;
+
     // Teachers are scoped to the selected program so that a department running
     // multiple programs (e.g. DOECE with BCT and BEX) only offers relevant
     // faculty. Without a program selected (e.g. editing a legacy entry) all
@@ -148,11 +160,28 @@ export default function Routines() {
     try {
       // Non-practical entries belong to the whole section, so they never
       // carry a group.
-      const payload = { ...form, group: form.type === 'P' ? form.group : '' };
-      if (editData) {
-        await api.put(`/routines/${editData._id}`, payload);
+      const group = form.type === 'P' ? form.group : '';
+      if (isElective) {
+        // Elective slots need at least one option (subject name + teacher);
+        // incomplete rows are silently dropped so partial input never
+        // creates a half-defined elective block.
+        const options = form.electiveOptions.filter(o => o.subject_name && o.teacher_id);
+        if (!options.length) {
+          alert('Add at least one elective option (subject name and teacher)');
+          return;
+        }
+        if (editData) {
+          await api.put(`/routines/${editData._id}`, { ...form, group, electiveOptions: options });
+        } else {
+          await api.post('/routines', { ...form, group, electiveOptions: options });
+        }
       } else {
-        await api.post('/routines', payload);
+        const payload = { ...form, group, electiveOptions: [] };
+        if (editData) {
+          await api.put(`/routines/${editData._id}`, payload);
+        } else {
+          await api.post('/routines', payload);
+        }
       }
       setShowModal(false);
       setEditData(null);
@@ -182,6 +211,17 @@ export default function Routines() {
     };
     const { year, part } = parseSemester(r.semester);
     setEditData(r);
+    // Editing an elective entry prefills every option of the block by
+    // collecting all routines sharing the same elective_group (the list is
+    // already loaded in memory for hod/dhod, who are the only editors).
+    const electiveOptions = r.is_elective && r.elective_group
+      ? routines
+          .filter(x => x.elective_group === r.elective_group)
+          .map(x => ({
+            subject_name: x.subject_name || '',
+            teacher_id: typeof x.teacher_id === 'object' ? x.teacher_id._id : (x.teacher_id || ''),
+          }))
+      : [{ subject_name: '', teacher_id: '' }];
     setForm({
       day: dayTime(r),
       startTime: r.startTime || '06:00',
@@ -196,6 +236,7 @@ export default function Routines() {
       section: r.section || '',
       group: r.group || '',
       type: r.type || 'L',
+      electiveOptions,
     });
     setShowModal(true);
   };
@@ -266,7 +307,7 @@ export default function Routines() {
                   <td>{r.startTime} - {r.endTime}</td>
                   <td>
                     {r.course_code}
-                    {r.subject_id?.title && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.subject_id.title}</div>}
+                    {r.subject_id?.title && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.subject_id.title}{r.subject_name ? ` — ${r.subject_name}` : ''}</div>}
                   </td>
                   <td>{getTeacherName(r.teacher_id)}</td>
                   <td>{r.section || '-'}</td>
@@ -390,18 +431,85 @@ export default function Routines() {
               )}
               <div className="form-group">
                 <label>Course</label>
-                <select className="form-control" value={form.subject_id} onChange={e => setForm({ ...form, subject_id: e.target.value })} required disabled={!form.part}>
+                <select className="form-control" value={form.subject_id} onChange={e => {
+                  const next = subjects.find(s => s._id === e.target.value);
+                  const elective = next ? /elective/i.test(`${next.code} ${next.title}`) : false;
+                  setForm({
+                    ...form,
+                    subject_id: e.target.value,
+                    // Seed one empty row so an elective slot starts with an
+                    // editable option instead of an empty editor.
+                    electiveOptions: elective ? [{ subject_name: '', teacher_id: '' }] : [],
+                  });
+                }} required disabled={!form.part}>
                   <option value="">Select Course</option>
                   {courseOptions.map(s => <option key={s._id} value={s._id}>{s.code} — {s.title}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label>Teacher</label>
-                <select className="form-control" value={form.teacher_id} onChange={e => setForm({ ...form, teacher_id: e.target.value })} required disabled={!form.program}>
-                  <option value="">Select Teacher</option>
-                  {teacherOptions.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                </select>
-              </div>
+              {/* Elective courses run as several parallel options in the same
+                  slot, each with its own subject name and teacher (e.g. "A"
+                  taught by NN, "B" taught by MM). Rows can be added/removed;
+                  incomplete rows are ignored on submit. Non-elective courses
+                  use the single teacher select below instead. */}
+              {isElective ? (
+                <div className="form-group">
+                  <label>Elective Options (courses offered in this slot)</label>
+                  {form.electiveOptions.map((opt, i) => (
+                    <div key={i} className="form-row" style={{ alignItems: 'center', marginBottom: 8 }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <input
+                          className="form-control"
+                          placeholder="Subject name (e.g. AI and Machine Learning)"
+                          value={opt.subject_name}
+                          onChange={e => {
+                            const next = [...form.electiveOptions];
+                            next[i] = { ...next[i], subject_name: e.target.value };
+                            setForm({ ...form, electiveOptions: next });
+                          }}
+                        />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <select
+                          className="form-control"
+                          value={opt.teacher_id}
+                          onChange={e => {
+                            const next = [...form.electiveOptions];
+                            next[i] = { ...next[i], teacher_id: e.target.value };
+                            setForm({ ...form, electiveOptions: next });
+                          }}
+                          disabled={!form.program}
+                        >
+                          <option value="">Select Teacher</option>
+                          {teacherOptions.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        onClick={() => setForm({ ...form, electiveOptions: form.electiveOptions.filter((_, j) => j !== i) })}
+                        disabled={form.electiveOptions.length <= 1}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-primary"
+                    onClick={() => setForm({ ...form, electiveOptions: [...form.electiveOptions, { subject_name: '', teacher_id: '' }] })}
+                  >
+                    + Add Elective Option
+                  </button>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>Teacher</label>
+                  <select className="form-control" value={form.teacher_id} onChange={e => setForm({ ...form, teacher_id: e.target.value })} required disabled={!form.program}>
+                    <option value="">Select Teacher</option>
+                    {teacherOptions.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                  </select>
+                </div>
+              )}
               <div className="modal-actions">
                 <button type="button" className="btn" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }} onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary">{editData ? 'Update' : 'Create'}</button>

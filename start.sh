@@ -34,3 +34,5 @@ echo "Done!"
 echo "  Frontend: http://localhost"
 echo "  Backend API: http://localhost:5000"
 echo "  (Re-run ./start.sh anytime to rebuild and reseed without losing data.)"
+
+docker compose up

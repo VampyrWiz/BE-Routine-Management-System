@@ -16,6 +16,12 @@ const mongoose = require('mongoose');
 // is created by a HoD or explicitly approved via the approve endpoint.
 // The department field replicates the teacher's department so that
 // DHoD-level queries can filter routines without a join.
+// Elective support: an elective course (title or code contains "Elective")
+// is offered as multiple parallel options in the same time slot, each taught
+// by a different teacher. When that happens one Routine document is created
+// per option with is_elective: true, subject_name holding the actual elective
+// title (e.g. "A", "Computational Intelligence"), and elective_group linking
+// every option of the same block so they can be updated together.
 const routineSchema = new mongoose.Schema({
   day: { type: String, enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], required: true },
   startTime: { type: String, required: true },
@@ -33,6 +39,9 @@ const routineSchema = new mongoose.Schema({
   semester: { type: String, required: true },
   department: { type: String, required: true },
   isApproved: { type: Boolean, default: false },
+  is_elective: { type: Boolean, default: false },
+  subject_name: { type: String, default: '' },
+  elective_group: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Routine', routineSchema);
