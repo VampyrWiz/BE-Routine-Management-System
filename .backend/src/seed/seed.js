@@ -463,28 +463,29 @@ for (const s of tagged) {
   allSubjects.push(s);
 }
 
+// upsertBy rewrites a collection so that its documents match the seed data
+// without destroying existing document _ids: each doc is matched by a stable
+// unique key (program code, subject code, department code) and updated in
+// place. Because _ids survive, routine entries that reference these documents
+// (teacher_id, subject_id) stay valid across re-seeds.
+const upsertBy = (model, docs, key) =>
+  model.bulkWrite(docs.map(doc => ({
+    updateOne: { filter: { [key]: doc[key] }, update: { $set: doc }, upsert: true },
+  })));
+
 async function seed() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
 
-    await Department.deleteMany({});
-    await Department.insertMany(departments);
+    await upsertBy(Department, departments, 'code');
     console.log(`${departments.length} departments seeded`);
 
-    await Program.deleteMany({});
-    await Program.insertMany(programs);
+    await upsertBy(Program, programs, 'code');
     console.log(`${programs.length} programs seeded`);
 
-    await Subject.deleteMany({});
-    await Subject.insertMany(allSubjects);
+    await upsertBy(Subject, allSubjects, 'code');
     console.log(`${allSubjects.length} subjects seeded`);
-
-    try {
-      await Teacher.collection.drop();
-    } catch (_) {
-      await Teacher.deleteMany({});
-    }
 
     const teachersData = [
       // === Keep existing placeholder teachers for DOASCE, DOEE, DOCE ===
@@ -611,8 +612,19 @@ async function seed() {
       if (t.department_code === 'DOECE') t.programs = ['BCT', 'BEX'];
     }
 
+    // Teachers are upserted by email one by one (bulkWrite/updateOne bypass
+    // the pre-save hook, so the password must be hashed via a full save()).
+    // Re-seeding refreshes every teacher's fields and resets their password
+    // to the seed default, but keeps their _id — so existing routine entries
+    // keep pointing at the same teacher instead of becoming orphaned.
     for (const t of teachersData) {
-      await Teacher.create(t);
+      const existing = await Teacher.findOne({ email: t.email });
+      if (existing) {
+        existing.set(t);
+        await existing.save();
+      } else {
+        await Teacher.create(t);
+      }
     }
     console.log(`${teachersData.length} teachers seeded`);
 
