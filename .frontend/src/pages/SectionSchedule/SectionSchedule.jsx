@@ -1,8 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import api from '../../api/axios';
 
-// Teaching week runs Monday to Friday — columns of the timetable grid.
+// Teaching week runs Monday to Friday — the day blocks of the timetable grid.
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+// Class time runs 09:15–16:45 in ten fixed 45-minute periods, mirroring the
+// printed routine format (e.g. BCT_III_II_AB.pdf). Periods are the grid
+// columns; each day has one row per group letter of the section.
+const fmtMin = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+const CLASS_START = 9 * 60 + 15;  // 09:15
+const CLASS_END = 16 * 60 + 45;   // 16:45
+const SLOT_MINUTES = 45;
+const fixedSlots = [];
+for (let m = CLASS_START; m < CLASS_END; m += SLOT_MINUTES) {
+  fixedSlots.push(`${fmtMin(m)}-${fmtMin(Math.min(m + SLOT_MINUTES, CLASS_END))}`);
+}
 
 // toRoman converts a 1-based year/part number to the Roman numeral used in
 // the semester string (e.g. 2 -> "II" so "Year II: Part I").
@@ -23,16 +36,23 @@ const getTeacherAbbrev = (name) => {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 };
 
-// INIT_FILTER drives the cascading Program -> Year -> Part -> Section ->
-// Group selects. Group is optional: "All Groups" shows the whole section,
-// where parallel practicals of the same course merge into one cell.
-const INIT_FILTER = { program: '', year: '', part: '', section: '', group: '' };
+// INIT_FILTER drives the cascading Program -> Year -> Part -> Section selects.
+// Both groups of the section are always shown, like the printed routine.
+const INIT_FILTER = { program: '', year: '', part: '', section: '' };
+
+// toMin converts "HH:MM" to minutes since midnight for period math.
+const toMin = (t) => {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+};
 
 export default function SectionSchedule() {
   const [routines, setRoutines] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [filter, setFilter] = useState(INIT_FILTER);
+  // scheduleRef targets the rendered grid (+ legend) for PNG export.
+  const scheduleRef = useRef(null);
 
   useEffect(() => {
     fetchRoutines();
@@ -80,13 +100,12 @@ export default function SectionSchedule() {
       .map(s => s.part)
   )].sort((a, b) => a - b);
 
-  // Sections come from the chosen program's config (e.g. BCT -> ["AB","CD"]),
-  // and groups are the letters inside the section name (section "AB" holds
-  // groups A and B). Both are stable curriculum facts, so they never depend
-  // on whether routines exist yet.
+  // Sections come from the chosen program's config (e.g. BCT -> ["AB","CD"]).
+  // Groups are the letters inside the section name (section "AB" holds
+  // groups A and B), and both group rows are always rendered.
   const selectedProgram = programs.find(p => p.code === filter.program);
   const sectionOptions = selectedProgram?.sections || [];
-  const groupOptions = filter.section ? ['', ...filter.section.split('')] : [];
+  const groupLetters = (filter.section || 'AB').split('');
 
   // semesterString rebuilds "Year II: Part I" from the numeric year/part so
   // it can be matched against the semester field stored on each routine.
@@ -94,19 +113,11 @@ export default function SectionSchedule() {
     (y && p) ? `Year ${toRoman(Number(y))}: Part ${toRoman(Number(p))}` : '';
 
   // Entries shown in the grid: only the chosen program/year/part/section.
-  // Entries without a group (lectures/tutorials, which run for the whole
-  // section) are shown for any selected group, while practicals are shown
-  // only for their own group — or for all groups when "All Groups" is chosen.
   const sectionRoutines = routines.filter(r =>
     (!filter.program || r.program === filter.program) &&
     (!filter.year || r.semester === semesterString(filter.year, filter.part)) &&
-    (!filter.section || r.section === filter.section) &&
-    (!filter.group || !r.group || r.group === filter.group)
+    (!filter.section || r.section === filter.section)
   );
-
-  // Time slots are the rows of the grid: unique start-end pairs sorted by
-  // start time (HH:MM zero-padded, so lexicographic order works).
-  const timeSlots = [...new Set(sectionRoutines.map(r => `${r.startTime}-${r.endTime}`))].sort();
 
   // getTeacherName resolves a teacher reference (populated object from the
   // API or raw id) to a display name.
@@ -115,44 +126,183 @@ export default function SectionSchedule() {
     return typeof t === 'object' ? (t.name || '-') : t;
   };
 
-  // forSlot returns the raw entries for a given day + time slot.
-  const forSlot = (day, slot) => {
-    const [startTime, endTime] = slot.split('-');
-    return sectionRoutines.filter(r => r.day === day && r.startTime === startTime && r.endTime === endTime);
+  // entryTeachers returns every teacher on an entry: the primary teacher plus
+  // any co-teachers stored in additional_teachers (co-taught sessions).
+  const entryTeachers = (r) => {
+    const primary = r.teacher_id ? [getTeacherName(r.teacher_id)] : [];
+    const extras = (r.additional_teachers || [])
+      .map(t => getTeacherName(t))
+      .filter(n => n && n !== '-');
+    return [...primary, ...extras];
   };
 
-  // mergeEntries collapses the entries of one cell into groups keyed by
-  // course + type. When two or more teachers share the same course, type,
-  // day and time slot (e.g. parallel practical batches or team-taught
-  // sessions), they are shown as one block with abbreviations like "AS + BS".
-  const mergeEntries = (entries) => {
-    const merged = new Map();
-    for (const r of entries) {
-      const key = `${r.course_code}|${r.type}`;
-      if (!merged.has(key)) merged.set(key, []);
-      merged.get(key).push(r);
-    }
-    return [...merged.values()];
+  // entryTeacherObjs returns the raw teacher references (populated objects or
+  // raw ids) so the designation is available for abbreviation assignment.
+  const entryTeacherObjs = (r) => {
+    const primary = r.teacher_id ? [r.teacher_id] : [];
+    return [...primary, ...(r.additional_teachers || [])];
   };
 
-  // Teacher abbreviations used in merged cells, collected for the legend.
-  // Elective blocks are always included (even a single-option elective)
-  // because their teacher codes carry the offered subject name too.
-  const usedAbbrevs = new Map();
-  for (const slot of timeSlots) {
-    for (const day of DAYS) {
-      for (const group of mergeEntries(forSlot(day, slot))) {
-        if (group.length > 1 || group[0].is_elective) {
-          for (const r of group) {
-            const name = getTeacherName(r.teacher_id);
-            usedAbbrevs.set(getTeacherAbbrev(name), { name, subject: r.subject_name });
-          }
-        }
+  // A practical covering the whole section (both groups) stores the section
+  // name as its group (e.g. group "AB" in section "AB").
+  const isWholeSection = (r) => !r.group || r.group === r.section;
+
+  // Place each entry onto the grid: it is anchored to the first period it
+  // covers and colSpan spans its full duration across consecutive periods.
+  // Whole-section entries also rowSpan across all group rows of the day,
+  // like the merged lectures in the printed routine.
+  const placed = [];
+  for (const r of sectionRoutines) {
+    const start = toMin(r.startTime);
+    const end = toMin(r.endTime);
+    const first = fixedSlots.findIndex(fs => {
+      const [from, to] = fs.split('-').map(toMin);
+      return start >= from && start < to;
+    });
+    if (first < 0) continue; // outside class time
+    let span = 1;
+    while (first + span < fixedSlots.length && end > toMin(fixedSlots[first + span].split('-')[0])) span++;
+    placed.push({ r, day: r.day, period: first, span, whole: isWholeSection(r) });
+  }
+
+  // Designation power order, highest first. When two teachers share the same
+  // abbreviation (e.g. "San San" and "Sam Sam" both yield "SS"), the more
+  // senior designation keeps the plain code and the next gets "SS1", "SS2", …
+  // Ties within one designation keep encounter order (first gets the plain
+  // code). Unknown designations rank lowest.
+  const DESIGNATION_RANK = [
+    'professor',
+    'associate professor',
+    'assistant professor',
+    'senior lecturer',
+    'lecturer',
+    'instructor',
+    'teaching assistant',
+  ];
+  const NORM_DESIG = {
+    'prof': 'professor', 'prof.': 'professor', 'professor': 'professor',
+    'assoc. prof': 'associate professor', 'assoc. prof.': 'associate professor',
+    'associate professor': 'associate professor', 'associate prof.': 'associate professor',
+    'asst. prof': 'assistant professor', 'asst. prof.': 'assistant professor',
+    'assistant professor': 'assistant professor', 'assistant prof.': 'assistant professor',
+    'senior lecturer': 'senior lecturer', 'lecturer': 'lecturer',
+    'instructor': 'instructor', 'teaching assistant': 'teaching assistant',
+  };
+  const designationRank = (d) => {
+    const key = (d || '').trim().toLowerCase();
+    const norm = NORM_DESIG[key] || key;
+    const idx = DESIGNATION_RANK.indexOf(norm);
+    return idx === -1 ? DESIGNATION_RANK.length : idx;
+  };
+
+  // Teacher abbreviations used in cells, collected with designation + first
+  // encounter order so colliding codes can be resolved deterministically.
+  const teacherInfo = new Map();
+  let order = 0;
+  for (const p of placed) {
+    for (const t of entryTeacherObjs(p.r)) {
+      const name = getTeacherName(t);
+      if (!name || name === '-') continue;
+      if (!teacherInfo.has(name)) {
+        teacherInfo.set(name, {
+          designation: typeof t === 'object' ? t.designation : '',
+          order: order++,
+        });
       }
     }
   }
+  // Resolve collisions per base code (e.g. "SS"): sort each group by
+  // designation power, then encounter order; the first keeps the plain code,
+  // the rest get suffixed numbers.
+  const byBase = new Map();
+  for (const [name, info] of teacherInfo) {
+    const base = getTeacherAbbrev(name);
+    if (!byBase.has(base)) byBase.set(base, []);
+    byBase.get(base).push({ name, ...info });
+  }
+  const abbrevByName = new Map();
+  for (const [base, group] of byBase) {
+    [...group]
+      .sort((a, b) => designationRank(a.designation) - designationRank(b.designation) || a.order - b.order)
+      .forEach((t, i) => abbrevByName.set(t.name, i === 0 ? base : `${base}${i}`));
+  }
+  // abbrevOf resolves the final code (with collision suffix) for a teacher.
+  const abbrevOf = (name) => abbrevByName.get(name) || getTeacherAbbrev(name);
 
   const hasSelection = filter.program && filter.year && filter.part && filter.section;
+
+  // handleDownload captures the visible schedule grid as a PNG image. The
+  // element's full scroll size is used so an overflowed table is not cut.
+  const [exporting, setExporting] = useState(false);
+  const handleDownload = async () => {
+    if (!scheduleRef.current) return;
+    setExporting(true);
+    try {
+      const el = scheduleRef.current;
+      const bg = getComputedStyle(el).backgroundColor || '#ffffff';
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        backgroundColor: bg,
+        width: el.scrollWidth,
+        height: el.scrollHeight,
+        windowWidth: el.scrollWidth,
+        useCORS: true,
+      });
+      const link = document.createElement('a');
+      link.download = `${filter.program}-Y${filter.year}P${filter.part}-${filter.section}-routine.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export the schedule as PNG');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // formatTime drops the leading zero like the printed routine ("09:15" ->
+  // "9:15", "13:45" stays).
+  const formatTime = (t) => t.replace(/^0/, '');
+
+  // cellBody renders the stacked entries of one grid cell, PDF-style:
+  //   Artificial Intelligence [P] Group_A (BJ+TA)
+  //   Computer Lab_3
+  const cellBody = (entries) => {
+    const { span } = entries[0];
+    return entries.map(({ r }) => {
+      const typeTxt = r.type === 'L' ? '[L]' : r.type === 'T' ? '[T]' : '[P]';
+      const title = r.subject_id?.title || r.course_code || '?';
+      const electiveName = r.is_elective && r.subject_name ? ` (${r.subject_name})` : '';
+      // The group letter inside a cell is only useful when the section has
+      // several groups (A/B); with a single group the row itself already
+      // denotes it, so nothing is shown. Practicals run by both groups of the
+      // section together (group === section) show "A/B" like the printed
+      // routine, but only when there is more than one group to show.
+      const showGroup = groupLetters.length > 1 && !!r.group;
+      const groupTxt = showGroup ? (r.group === r.section ? groupLetters.join('/') : r.group) : '';
+      const altWeek = r.week && r.week !== 'every' ? '(Alt.Week)' : '';
+      const teachers = entryTeachers(r);
+      const teacherTxt = teachers.length ? `(${teachers.map(abbrevOf).join('+')})` : '';
+      return (
+        <div key={r._id} style={{ fontSize: 13, lineHeight: 1.35, textAlign: 'center' }}>
+          <div style={{ fontWeight: 700 }}>
+            {title}{typeTxt}{electiveName}
+          </div>
+          {(groupTxt || altWeek || teacherTxt) && (
+            <div style={{ color: 'var(--text-secondary)' }}>
+              {groupTxt}
+              {groupTxt && altWeek ? '·' : ''} {altWeek} {teacherTxt}
+            </div>
+          )}
+          {r.note && <div style={{ color: 'var(--text-secondary)' }}>{r.note}</div>}
+        </div>
+      );
+    }).map((node, i, arr) => (
+      <div key={i} style={{ marginBottom: i < arr.length - 1 ? 6 : 0, ...(span > 1 ? {} : {}) }}>
+        {node}
+      </div>
+    ));
+  };
 
   return (
     <div>
@@ -160,9 +310,9 @@ export default function SectionSchedule() {
         <h2>Section Schedule</h2>
       </div>
 
-      {/* Filter bar: pick a Program -> Year -> Part -> Section -> Group to
-          render the weekly timetable. Group is optional — leaving it on
-          "All Groups" shows the full section schedule. */}
+      {/* Filter bar: pick a Program -> Year -> Part -> Section to render the
+          weekly timetable in the printed routine format (period columns, one
+          row per group). */}
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="form-row">
           <div className="form-group">
@@ -188,106 +338,131 @@ export default function SectionSchedule() {
           </div>
           <div className="form-group">
             <label>Section</label>
-            <select className="form-control" value={filter.section} onChange={e => setFilter({ ...filter, section: e.target.value, group: '' })} disabled={!filter.part}>
+            <select className="form-control" value={filter.section} onChange={e => setFilter({ ...filter, section: e.target.value })} disabled={!filter.part}>
               <option value="">Select Section</option>
               {sectionOptions.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Group</label>
-            <select className="form-control" value={filter.group} onChange={e => setFilter({ ...filter, group: e.target.value })} disabled={!filter.section}>
-              <option value="">All Groups</option>
-              {groupOptions.filter(g => g !== '').map(g => <option key={g} value={g}>Group {g}</option>)}
             </select>
           </div>
         </div>
       </div>
 
       {hasSelection ? (
-        <div className="card">
+        <div className="card" ref={scheduleRef}>
           <div className="card-title">
-            {filter.program} — Year {['I', 'II', 'III', 'IV', 'V'][Number(filter.year) - 1] || filter.year}, Part {['I', 'II'][Number(filter.part) - 1] || filter.part} — Section {filter.section}{filter.group ? `, Group ${filter.group}` : ' (All Groups)'}
+            {filter.program} — Year {['I', 'II', 'III', 'IV', 'V'][Number(filter.year) - 1] || filter.year}, Part {['I', 'II'][Number(filter.part) - 1] || filter.part} — Section {filter.section}
           </div>
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ minWidth: 90 }}>Time</th>
-                  {DAYS.map(d => <th key={d}>{d}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {timeSlots.map(slot => (
-                  <tr key={slot}>
-                    <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{slot.replace('-', ' - ')}</td>
-                    {DAYS.map(day => {
-                      const cells = mergeEntries(forSlot(day, slot));
-                      return (
-                        <td key={day} style={{ verticalAlign: 'top' }}>
-                          {cells.map(entries => {
-                            const isElective = entries[0].is_elective;
-                            const teachers = entries.map(r => getTeacherName(r.teacher_id));
-                            const groups = [...new Set(entries.map(r => r.group).filter(Boolean))];
-                            return (
-                              <div key={`${entries[0].course_code}-${entries[0].type}`} style={{ marginBottom: cells.length > 1 ? 8 : 0 }}>
-                                <div style={{ fontWeight: 600 }}>{entries[0].course_code}</div>
-                                {entries[0].subject_id?.title && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{entries[0].subject_id.title}</div>}
-                                <div style={{ fontSize: 12, marginTop: 2 }}>
-                                  <span className={`badge ${entries[0].type === 'L' ? 'badge-approved' : entries[0].type === 'T' ? 'badge-pending' : 'badge-rejected'}`}>{entries[0].type}</span>
-                                  {groups.length > 0 && <span style={{ marginLeft: 6, fontWeight: 600 }}>Grp {groups.join(', ')}</span>}
-                                  {!isElective && (
-                                    <span style={{ marginLeft: 6 }}>
-                                      {entries.length === 1
-                                        ? teachers[0]
-                                        : teachers.map(getTeacherAbbrev).join(' + ')}
-                                    </span>
-                                  )}
-                                </div>
-                                {/* Elective block: one line per offered course,
-                                    shown as "NN (A)" — teacher abbreviation
-                                    plus the elective subject name. */}
-                                {isElective && (
-                                  <div style={{ fontSize: 12, marginTop: 2 }}>
-                                    {entries.map(r => (
-                                      <div key={r._id}>
-                                        <strong>{getTeacherAbbrev(getTeacherName(r.teacher_id))}</strong> ({r.subject_name || '?'})
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                          {cells.length === 0 && <span style={{ color: 'var(--text-secondary)' }}>—</span>}
-                        </td>
-                      );
+          {sectionRoutines.length === 0 ? (
+            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>
+              No routine entries for this section yet
+            </div>
+          ) : (
+            <div className="table-container">
+              <table className="routine-grid">
+                <thead>
+                  <tr>
+                    <th rowSpan={2} style={{ minWidth: 90 }}>Day / Period</th>
+                    <th rowSpan={2}>Group</th>
+                    {fixedSlots.map(s => {
+                      const [from, to] = s.split('-');
+                      return <th key={s} style={{ whiteSpace: 'nowrap' }}>{formatTime(from)} - {formatTime(to)}</th>;
                     })}
                   </tr>
-                ))}
-                {timeSlots.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>No routine entries for this section yet</td>
+                    {fixedSlots.map((s, i) => <th key={s}>{i + 1}</th>)}
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {/* Legend: type meanings plus the teacher abbreviations used in
-              merged cells (e.g. "AS" -> "Aman Shakya"). */}
+                </thead>
+                <tbody>
+                  {DAYS.map(day => {
+                    const dayPlaced = placed.filter(p => p.day === day);
+                    // Columns of the day covered by whole-section entries
+                    // (rowSpan across all group rows). Periods inside these
+                    // ranges must not emit a cell on the rows below, or the
+                    // browser pushes them past the covered columns and the
+                    // table grows beyond its period columns.
+                    const wholeCover = new Set();
+                    for (const p of dayPlaced) {
+                      if (!p.whole) continue;
+                      for (let k = p.period; k < p.period + p.span; k++) wholeCover.add(k);
+                    }
+                    return groupLetters.map((g, gi) => {
+                      // covered collects columns already occupied by a
+                      // colSpan cell earlier in this row (whole-section
+                      // spans on the first group row included).
+                      const covered = new Set(gi > 0 ? wholeCover : []);
+                      return (
+                      <tr key={`${day}-${g}`}>
+                        {gi === 0 && (
+                          <td rowSpan={groupLetters.length} className="day-cell">{day}</td>
+                        )}
+                        <td className="group-cell">{g}</td>
+                        {fixedSlots.map((slot, i) => {
+                          if (covered.has(i)) return null;
+                          // Entries anchored at this period that belong to this
+                          // row: whole-section entries live on the first group
+                          // row and span the rest via rowSpan.
+                          const here = dayPlaced.filter(p =>
+                            p.period === i && (p.whole ? gi === 0 : p.r.group === g)
+                          );
+                          if (!here.length) {
+                            // Unallocated run of periods -> one merged BREAK
+                            // cell spanning the whole run.
+                            let brk = 1;
+                            while (i + brk < fixedSlots.length && !covered.has(i + brk)) {
+                              const nxt = dayPlaced.filter(p =>
+                                p.period === i + brk && (p.whole ? gi === 0 : p.r.group === g)
+                              );
+                              if (nxt.length) break;
+                              covered.add(i + brk);
+                              brk++;
+                            }
+                            return <td key={slot} colSpan={brk} className="break-cell">BREAK</td>;
+                          }
+                          const { span, whole } = here[0];
+                          for (let k = i; k < i + span; k++) covered.add(k);
+                          return (
+                            <td
+                              key={slot}
+                              colSpan={span}
+                              rowSpan={whole ? groupLetters.length : 1}
+                              style={{ verticalAlign: 'top' }}
+                            >
+                              {cellBody(here)}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                    });
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {/* Legend: type meanings plus the teacher abbreviations used in the
+              cells (e.g. "AS" -> "Aman Shakya"). */}
           <div style={{ marginTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
-            <div style={{ marginBottom: usedAbbrevs.size ? 6 : 0 }}>
+            <div style={{ marginBottom: abbrevByName.size ? 6 : 0 }}>
               Legend: <span className="badge badge-approved">L</span> Lecture, <span className="badge badge-pending">T</span> Tutorial, <span className="badge badge-rejected">P</span> Practical
             </div>
-            {usedAbbrevs.size > 0 && (
+            {abbrevByName.size > 0 && (
               <div>
-                {[...usedAbbrevs.entries()].map(([abbrev, info]) => (
-                  <span key={abbrev} style={{ marginRight: 12 }}>
-                    <strong>{abbrev}</strong> = {info.name}{info.subject ? ` (${info.subject})` : ''}
+                {[...abbrevByName.entries()].map(([name, abbrev]) => (
+                  <span key={name} style={{ marginRight: 12 }}>
+                    <strong>{abbrev}</strong> = {name}
                   </span>
                 ))}
               </div>
             )}
           </div>
+          {/* Export button at the end of the schedule: captures the grid and
+              legend as a PNG image of the current view. */}
+          {sectionRoutines.length > 0 && (
+            <div style={{ marginTop: 16, textAlign: 'right' }}>
+              <button className="btn btn-primary" onClick={handleDownload} disabled={exporting}>
+                {exporting ? 'Exporting…' : '⬇ Download PNG'}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="card">

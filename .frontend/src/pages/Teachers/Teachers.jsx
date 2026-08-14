@@ -13,12 +13,15 @@ export default function Teachers() {
   const [form, setForm] = useState({ name: '', email: '', password: '', contact: '', designation: '', department_code: 'BCT', role: 'teacher', max_hours_per_week: 15, programs: [] });
   // programs list populates the programs checkboxes in the modal
   const [programs, setPrograms] = useState([]);
+  // departments list populates the Department select (plus "External")
+  const [departments, setDepartments] = useState([]);
 
   // Fetch teacher list once on mount; no dependency on teacher because the list
   // is read-only data that doesn't change when the session user changes
   useEffect(() => {
     fetchTeachers();
     fetchPrograms();
+    fetchDepartments();
   }, []);
 
   const fetchTeachers = async () => {
@@ -29,6 +32,11 @@ export default function Teachers() {
   // fetchPrograms loads the program codes used for the Programs checkboxes
   const fetchPrograms = async () => {
     try { const { data } = await api.get('/programs'); setPrograms(data); } catch {}
+  };
+
+  // fetchDepartments loads the department codes for the Department select
+  const fetchDepartments = async () => {
+    try { const { data } = await api.get('/departments'); setDepartments(data); } catch {}
   };
 
   // toggleProgram adds/removes a program code from the teacher's programs
@@ -89,6 +97,14 @@ export default function Teachers() {
   // Maps role strings to CSS class names for colored badge display
   const roleBadge = { hod: 'badge-hod', dhod: 'badge-dhod', teacher: 'badge-teacher' };
 
+  // Department select options: every department from the collection plus the
+  // "External" pseudo-department for external teachers (vendors, guest
+  // lecturers, industry partners) who belong to no department.
+  const EXTERNAL_DEPT = 'External';
+  const deptOptions = [...new Set(
+    [...departments.map(d => d.code), EXTERNAL_DEPT, form.department_code].filter(Boolean)
+  )];
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -124,7 +140,7 @@ export default function Teachers() {
                   <td>{t.name}</td>
                   <td>{t.email}</td>
                   <td>{t.designation}</td>
-                  <td>{t.department_code}</td>
+                  <td>{t.department_code === EXTERNAL_DEPT ? 'External' : t.department_code}</td>
                   <td><span className={`badge ${roleBadge[t.role]}`}>{t.role.toUpperCase()}</span></td>
                   <td>{t.max_hours_per_week}h</td>
                   {/* Action buttons (Edit/Del) are role-gated: only HoD can
@@ -184,8 +200,16 @@ export default function Teachers() {
               </div>
               <div className="form-row">
                 <div className="form-group">
+                  {/* External teachers (not tied to any department) are picked
+                      from the same select via the "External" option. */}
                   <label>Department</label>
-                  <input className="form-control" value={form.department_code} onChange={e => setForm({ ...form, department_code: e.target.value })} />
+                  <select className="form-control" value={form.department_code} onChange={e => setForm({ ...form, department_code: e.target.value })}>
+                    {deptOptions.map(code => (
+                      <option key={code} value={code}>
+                        {code === EXTERNAL_DEPT ? 'External (no department)' : code}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label>Role</label>

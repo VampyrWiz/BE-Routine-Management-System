@@ -352,6 +352,58 @@ tr:hover td {
   background: var(--bg-tertiary);
 }
 
+/* ===== Routine grid (PDF-style timetable) =====
+   Unlike the plain data tables, the schedule grid draws a full border around
+   every cell so each period block is clearly separated, and centres its
+   content like the printed routine. */
+.routine-grid {
+  border-collapse: collapse;
+}
+
+.routine-grid th,
+.routine-grid td {
+  border: 1px solid var(--border-color);
+  text-align: center;
+  vertical-align: middle;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+.routine-grid th {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.routine-grid td {
+  min-width: 70px;
+}
+
+.routine-grid td.day-cell {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.routine-grid td.group-cell {
+  font-weight: 700;
+  width: 36px;
+  min-width: 36px;
+}
+
+.routine-grid td.break-cell {
+  background: var(--orange);
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.routine-grid tr:hover td {
+  background: transparent;
+}
+
 /* ===== Buttons ===== */
 /* Base button styles with semantic colour variants for primary, success, danger, and warning actions */
 .btn {

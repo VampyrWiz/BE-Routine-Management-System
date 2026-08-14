@@ -9,7 +9,14 @@ const mongoose = require('mongoose');
 // program stores the program code (e.g. "BCT", "BEX") the routine belongs to,
 // which is used to scope course and teacher selection in the UI.
 // teacher_id references Teacher (ObjectId + ref) so that populate() can
-// resolve teacher name/email/designation in a single query.
+// resolve teacher name/email/designation in a single query. A session can be
+// co-taught: additional_teachers lists any extra faculty for the same subject
+// and slot (e.g. team-teaching or shared practical supervision).
+// note is a free-text optional remark (e.g. "Both sections together", "Lab
+// room 203") shown alongside the entry wherever the routine is displayed.
+// week marks alternate-week practicals: 'every' (default) runs weekly, while
+// 'odd' / 'even' mean the entry only runs on odd or even numbered weeks —
+// two entries sharing a slot but with different week values alternate.
 // type distinguishes Lecture / Tutorial / Practical so the system can
 // compute hour totals per category when enforcing workload limits.
 // isApproved defaults to false; it is set to true only when the routine
@@ -33,7 +40,8 @@ const routineSchema = new mongoose.Schema({
   section: { type: String, default: '' },
   // group is the batch letter inside a section (e.g. "A" within section "AB").
   // Section names are letter pairs, so the group letters always come from
-  // the section name itself.
+  // the section name itself. A practical covering the whole section stores
+  // the section name as the group (group === section means "both groups").
   group: { type: String, default: '' },
   type: { type: String, enum: ['L', 'T', 'P'], default: 'L' },
   semester: { type: String, required: true },
@@ -42,6 +50,9 @@ const routineSchema = new mongoose.Schema({
   is_elective: { type: Boolean, default: false },
   subject_name: { type: String, default: '' },
   elective_group: { type: String, default: '' },
+  additional_teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }],
+  note: { type: String, default: '' },
+  week: { type: String, enum: ['every', 'odd', 'even'], default: 'every' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Routine', routineSchema);

@@ -42,7 +42,9 @@ export default function App() {
       <Route path="/programs" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Programs /></AppLayout>} />
       <Route path="/departments" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Departments /></AppLayout>} />
       <Route path="/routines" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Routines /></AppLayout>} />
-      <Route path="/section-schedule" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><SectionSchedule /></AppLayout>} />
+      {/* Section Schedule is read-only weekly timetable grouped per section,
+          visible to HoD/DHoD only (they plan the routines). */}
+      <Route path="/section-schedule" element={<AppLayout roles={['hod', 'dhod']}><SectionSchedule /></AppLayout>} />
       <Route path="/approvals" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Approvals /></AppLayout>} />
       {/* Profile is accessible to all authenticated roles — every teacher
           should be able to update their own contact info and password. */}

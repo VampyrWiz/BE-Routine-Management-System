@@ -11,11 +11,14 @@ const TYPES = ['L', 'T', 'P'];
 // and program from the chosen subject.
 // electiveOptions holds the parallel elective offerings for an elective slot
 // (each row = subject name + teacher), e.g. "A" -> NN, "B" -> MM, ...
+// additional_teachers lets one subject/slot be co-taught by several faculty
+// ("Add More Teachers" appends a row). week marks alternate-week practicals
+// ('every' | 'odd' | 'even') and note is a free-text remark shown alongside.
 const INIT_FORM = {
-  day: 'Monday', startTime: '06:00', endTime: '07:00',
+  day: 'Monday', startTime: '09:15', endTime: '10:00',
   program: '', year: '', part: '', subject_id: '', course_code: '',
   teacher_id: '', section: '', group: '', type: 'L',
-  electiveOptions: [],
+  electiveOptions: [], additional_teachers: [], note: '', week: 'every',
 };
 
 export default function Routines() {
@@ -110,6 +113,19 @@ export default function Routines() {
     return found ? found.name : t;
   };
 
+  // getEntryTeachers lists every name on an entry: the primary teacher plus
+  // any co-teachers in additional_teachers (populated objects or raw ids).
+  const getEntryTeachers = (r) => {
+    const primary = r.teacher_id ? [getTeacherName(r.teacher_id)] : [];
+    const extras = (r.additional_teachers || [])
+      .map(t => getTeacherName(t))
+      .filter(n => n && n !== '-');
+    return [...primary, ...extras];
+  };
+
+  // Week labels for the odd/even alternate-week practicals.
+  const weekLabel = (w) => w === 'odd' ? 'Odd weeks' : w === 'even' ? 'Even weeks' : '';
+
   // Cascading option lists derived from the fetched subjects.
   // Only the options that make sense for the currently selected program
   // (and year) are shown, so the routine always matches the curriculum.
@@ -150,10 +166,11 @@ export default function Routines() {
 
   // Sections come from the chosen program's config (e.g. BCT -> ["AB","CD"]).
   // Groups are the letters inside the section name (section "AB" has groups
-  // A and B), so no extra lookup table is needed.
+  // A and B), plus one "Both" entry whose value is the whole section — a
+  // practical covering both groups at once stores the section as its group.
   const selectedProgram = programs.find(p => p.code === form.program);
   const sectionOptions = selectedProgram?.sections || [];
-  const groupOptions = form.section ? form.section.split('') : [];
+  const groupOptions = form.section ? [...form.section.split(''), form.section] : [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -176,7 +193,18 @@ export default function Routines() {
           await api.post('/routines', { ...form, group, electiveOptions: options });
         }
       } else {
-        const payload = { ...form, group, electiveOptions: [] };
+        // Co-teachers: dedupe and drop any row that repeats the primary
+        // teacher — one entry, one subject, multiple distinct faculty.
+        const additional = [...new Set(form.additional_teachers.filter(Boolean))]
+          .filter(id => id !== form.teacher_id);
+        const payload = {
+          ...form,
+          group,
+          note: form.note || '',
+          week: form.week || 'every',
+          additional_teachers: additional,
+          electiveOptions: [],
+        };
         if (editData) {
           await api.put(`/routines/${editData._id}`, payload);
         } else {
@@ -236,6 +264,11 @@ export default function Routines() {
       section: r.section || '',
       group: r.group || '',
       type: r.type || 'L',
+      note: r.note || '',
+      week: r.week || 'every',
+      additional_teachers: (r.additional_teachers || []).map(t =>
+        typeof t === 'object' ? t._id : t
+      ),
       electiveOptions,
     });
     setShowModal(true);
@@ -296,6 +329,7 @@ export default function Routines() {
                 <th>Program</th>
                 <th>Type</th>
                 <th>Semester</th>
+                <th>Note</th>
                 <th>Status</th>
                 {isHodOrDhod && <th>Actions</th>}
               </tr>
@@ -309,12 +343,22 @@ export default function Routines() {
                     {r.course_code}
                     {r.subject_id?.title && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.subject_id.title}{r.subject_name ? ` — ${r.subject_name}` : ''}</div>}
                   </td>
-                  <td>{getTeacherName(r.teacher_id)}</td>
+                  <td>
+                    {getEntryTeachers(r).join(', ')}
+                  </td>
                   <td>{r.section || '-'}</td>
-                  <td>{r.group || '-'}</td>
+                  {/* A practical covering the whole section stores the section
+                      name as its group — display it as "Both". */}
+                  <td>
+                    {r.group === r.section ? 'Both' : (r.group || '-')}
+                    {r.week && r.week !== 'every' && (
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{weekLabel(r.week)}</div>
+                    )}
+                  </td>
                   <td>{r.program || '-'}</td>
                   <td>{r.type}</td>
                   <td>{r.semester}</td>
+                  <td>{r.note || '-'}</td>
                   <td>
                     {/* Status badge: color-coded pills for Approved vs Pending */}
                     {r.isApproved
@@ -340,7 +384,7 @@ export default function Routines() {
                 <tr>
                   {/* colSpan adjusts to the number of visible columns
                       depending on whether actions are available */}
-                  <td colSpan={isHodOrDhod ? 11 : 10} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>No routines found</td>
+                  <td colSpan={isHodOrDhod ? 12 : 11} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>No routines found</td>
                 </tr>
               )}
             </tbody>
@@ -378,11 +422,12 @@ export default function Routines() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Start Time</label>
-                  <input className="form-control" type="time" value={form.startTime} onChange={e => setForm({ ...form, startTime: e.target.value })} required />
+                  {/* Class time runs 09:15–16:45, enforced on the pickers. */}
+                  <input className="form-control" type="time" min="09:15" max="16:45" value={form.startTime} onChange={e => setForm({ ...form, startTime: e.target.value })} required />
                 </div>
                 <div className="form-group">
                   <label>End Time</label>
-                  <input className="form-control" type="time" value={form.endTime} onChange={e => setForm({ ...form, endTime: e.target.value })} required />
+                  <input className="form-control" type="time" min="09:15" max="16:45" value={form.endTime} onChange={e => setForm({ ...form, endTime: e.target.value })} required />
                 </div>
               </div>
               <div className="form-row">
@@ -419,16 +464,45 @@ export default function Routines() {
               </div>
               {/* Group is only offered for practicals (P): a practical batch
                   belongs to one group inside the section, while lectures and
-                  tutorials cover the whole section at once. */}
+                  tutorials cover the whole section at once. "Both" (the whole
+                  section) is also offered for practicals run by both groups
+                  together. */}
               {form.type === 'P' && (
                 <div className="form-group">
                   <label>Group</label>
                   <select className="form-control" value={form.group} onChange={e => setForm({ ...form, group: e.target.value })} required disabled={!form.section}>
                     <option value="">Select Group</option>
-                    {groupOptions.map(g => <option key={g} value={g}>{g}</option>)}
+                    {groupOptions.map(g => (
+                      <option key={g} value={g}>
+                        {g === form.section ? `Both Groups (${g.split('').join(' + ')})` : `Group ${g}`}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Week</label>
+                  {/* Alternate-week practicals: "Odd"/"Even" means the entry
+                      runs only on odd or even weeks, e.g. Simulation one week
+                      and AI the next in the same slot. */}
+                  <select className="form-control" value={form.week} onChange={e => setForm({ ...form, week: e.target.value })}>
+                    <option value="every">Every Week</option>
+                    <option value="odd">Odd Weeks Only</option>
+                    <option value="even">Even Weeks Only</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Note (optional)</label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    placeholder="e.g. Lab room 203, combined with section CD"
+                    value={form.note}
+                    onChange={e => setForm({ ...form, note: e.target.value })}
+                  />
+                </div>
+              </div>
               <div className="form-group">
                 <label>Course</label>
                 <select className="form-control" value={form.subject_id} onChange={e => {
@@ -508,6 +582,45 @@ export default function Routines() {
                     <option value="">Select Teacher</option>
                     {teacherOptions.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
                   </select>
+                  {/* Co-taught sessions: "+ Add More Teachers" appends extra
+                      teacher rows for the same subject and slot. Rows repeat
+                      the teacher select; the primary teacher is filtered out
+                      on submit. */}
+                  {form.additional_teachers.map((tid, i) => (
+                    <div key={i} className="form-row" style={{ alignItems: 'center', marginTop: 8 }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <select
+                          className="form-control"
+                          value={tid}
+                          onChange={e => {
+                            const next = [...form.additional_teachers];
+                            next[i] = e.target.value;
+                            setForm({ ...form, additional_teachers: next });
+                          }}
+                          disabled={!form.program}
+                        >
+                          <option value="">Select Additional Teacher</option>
+                          {teacherOptions.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        onClick={() => setForm({ ...form, additional_teachers: form.additional_teachers.filter((_, j) => j !== i) })}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-primary"
+                    style={{ marginTop: 8 }}
+                    onClick={() => setForm({ ...form, additional_teachers: [...form.additional_teachers, ''] })}
+                    disabled={!form.program || !form.teacher_id}
+                  >
+                    + Add More Teachers
+                  </button>
                 </div>
               )}
               <div className="modal-actions">

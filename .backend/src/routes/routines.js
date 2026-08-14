@@ -60,7 +60,8 @@ const assertWorkload = async (teacher, newHours) => {
 };
 
 // GET /api/routines — List routines with role-based filtering.
-// Teachers can only see their own routines (filter by teacher_id).
+// Teachers can only see their own routines (filter by teacher_id, including
+// co-taught sessions via additional_teachers).
 // DHoDs can only see routines for their department.
 // Additional query parameters (semester, department, teacher_id) allow
 // further narrowing. populate is used to resolve teacher_id into
@@ -70,7 +71,10 @@ router.get('/', protect, async (req, res) => {
   try {
     const filter = {};
     if (req.teacher.role === 'teacher') {
-      filter.teacher_id = req.teacher._id;
+      filter.$or = [
+        { teacher_id: req.teacher._id },
+        { additional_teachers: req.teacher._id },
+      ];
     }
     if (req.teacher.role === 'dhod') {
       filter.department = req.teacher.department_code;
@@ -80,12 +84,32 @@ router.get('/', protect, async (req, res) => {
     if (req.query.teacher_id) filter.teacher_id = req.query.teacher_id;
     const routines = await Routine.find(filter)
       .populate('teacher_id', 'name email designation')
+      .populate('additional_teachers', 'name email designation')
       .populate('subject_id', 'code title semester program');
     res.json(routines);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
+
+// resolveTeachers loads every teacher referenced by a payload (the primary
+// teacher plus any additional_teachers) and fails fast if any id is unknown.
+// Returns an array of Teacher documents with the primary teacher first.
+const resolveTeachers = async (primaryId, additionalIds) => {
+  const ids = [primaryId, ...(Array.isArray(additionalIds) ? additionalIds : [])]
+    .map(id => String(id))
+    .filter(Boolean);
+  const seen = new Set();
+  const teachers = [];
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const t = await Teacher.findById(id);
+    if (!t) throw Object.assign(new Error('Teacher not found'), { status: 404 });
+    teachers.push(t);
+  }
+  return teachers;
+};
 
 // POST /api/routines — Create a routine entry (HoD or DHoD only).
 // Before saving, the handler calculates the teacher's total scheduled hours
@@ -141,6 +165,7 @@ router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
           teacher_id: opt.teacher_id,
           elective_group: group,
           is_elective: true,
+          additional_teachers: [],
           department: routineData.department || teacher.department_code,
           isApproved: req.teacher.role === 'hod',
         }));
@@ -148,35 +173,39 @@ router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
       return res.status(201).json(created);
     }
 
-    // Regular single-teacher entry.
-    const teacher = await Teacher.findById(routineData.teacher_id);
-    if (!teacher) return res.status(404).json({ message: 'Teacher not found' });
-
-    try {
-      await assertWorkload(teacher, newHours);
-    } catch (err) {
-      if (err.requiresApproval) {
-        return res.status(400).json({
-          message: err.message,
-          requiresApproval: true,
-          currentHours: err.currentHours,
-          newHours,
-          maxHours: teacher.max_hours_per_week,
-        });
+    // Regular entry — possibly co-taught by several teachers.
+    const teachers = await resolveTeachers(routineData.teacher_id, req.body.additional_teachers);
+    for (const teacher of teachers) {
+      try {
+        await assertWorkload(teacher, newHours);
+      } catch (err) {
+        if (err.requiresApproval) {
+          return res.status(400).json({
+            message: err.message,
+            requiresApproval: true,
+            currentHours: err.currentHours,
+            newHours,
+            maxHours: teacher.max_hours_per_week,
+          });
+        }
+        throw err;
       }
-      throw err;
     }
 
+    const primary = teachers[0];
     const routine = await Routine.create({
       ...routineData,
       // The department is taken from the teacher's own department so the
       // DHoD-level routine filtering works without the client supplying it.
-      department: routineData.department || teacher.department_code,
+      department: routineData.department || primary.department_code,
+      // additional_teachers excludes the primary teacher and keeps the order
+      // submitted (deduped by resolveTeachers).
+      additional_teachers: teachers.slice(1).map(t => t._id),
       isApproved: req.teacher.role === 'hod',
     });
     res.status(201).json(routine);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(err.status || 400).json({ message: err.message });
   }
 });
 
@@ -210,6 +239,7 @@ router.put('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
           teacher_id: opt.teacher_id,
           elective_group: group,
           is_elective: true,
+          additional_teachers: [],
           department: routineData.department || teacher.department_code,
           isApproved: req.teacher.role === 'hod',
         }));
@@ -217,7 +247,15 @@ router.put('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
       return res.json(updated);
     }
 
-    const routine = await Routine.findByIdAndUpdate(req.params.id, routineData, { new: true });
+    // Co-taught entries: validate every teacher and store the deduplicated
+    // list without the primary teacher.
+    const teachers = await resolveTeachers(routineData.teacher_id, req.body.additional_teachers);
+    routineData.additional_teachers = teachers.slice(1).map(t => t._id);
+
+    const routine = await Routine.findByIdAndUpdate(req.params.id, routineData, { new: true })
+      .populate('teacher_id', 'name email designation')
+      .populate('additional_teachers', 'name email designation')
+      .populate('subject_id', 'code title semester program');
     if (!routine) return res.status(404).json({ message: 'Routine not found' });
     res.json(routine);
   } catch (err) {
