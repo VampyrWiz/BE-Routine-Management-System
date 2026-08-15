@@ -6,6 +6,8 @@ const Subject = require('../models/Subject');
 const Program = require('../models/Program');
 const Teacher = require('../models/Teacher');
 
+// Seed data: every department of the college, keyed by unique short code
+// (e.g. "DOECE") that teachers/programs/routines reference as a string.
 const departments = [
   { code: 'DOASCE', fullName: 'Department of Applied Science and Chemical Engineering' },
   { code: 'DOECE', fullName: 'Department of Electronics and Computer Engineering' },
@@ -14,6 +16,8 @@ const departments = [
   { code: 'DOCE', fullName: 'Department of Civil Engineering' },
   { code: 'DOA', fullName: 'Department of Architecture' },
 ];
+// Seed data: the degree programs offered, each tied to its department and
+// listing its section names (e.g. BCT has sections "AB" and "CD").
 const programs = [
   { code: 'BCE', fullName: 'Bachelor in Civil Engineering', department_code: 'DOCE', duration_years: 4, sections: ['AB', 'CD', 'EF', 'GH'] },
   { code: 'BAR', fullName: 'Bachelor in Architecture', department_code: 'DOA', duration_years: 5, sections: ['AB'] },
@@ -24,6 +28,9 @@ const programs = [
   { code: 'BAE', fullName: 'Bachelor in Aerospace Engineering', department_code: 'DOMAE', duration_years: 4, sections: ['AB'] },
   { code: 'BCH', fullName: 'Bachelor in Chemical Engineering', department_code: 'DOASCE', duration_years: 4, sections: ['AB'] },
 ];
+// Seed data: the full BCE curriculum (Civil Engineering). The subject object
+// shape mirrors the Subject model — L/T/P hours, assessment/final marks per
+// theory & practical, duration, totals — with department set per entry.
 const bceSubjects = [
   { code: 'ENSH 101', title: 'Engineering Mathematics I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOCE', remark: '' },
   { code: 'ENSH 103', title: 'Engineering Chemistry', credits: 3, L: 3, T: 1, P: 3, totalHours: 7, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 25, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 125, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOCE', remark: '' },
@@ -75,6 +82,7 @@ const bceSubjects = [
   { code: 'ENCE 461', title: 'Project II', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOCE', remark: '' },
   { code: 'ENCE 462', title: 'Internship', credits: 6, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 100, practicalDuration: 0, totalMarks: 200, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOCE', remark: '' }
 ];
+// Same curriculum shape, BEL (Electrical Engineering) subjects.
 const belSubjects = [
   { code: 'ENSH 101', title: 'Engineering Mathematics I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOEE', remark: '' },
   { code: 'ENSH 102', title: 'Engineering Physics', credits: 4, L: 4, T: 1, P: 2, totalHours: 7, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 25, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 125, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOEE', remark: '' },
@@ -126,6 +134,7 @@ const belSubjects = [
   { code: 'ENEE 462', title: 'Internship', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOEE', remark: '' },
   { code: 'ENEE 461', title: 'Project II', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOEE', remark: '' }
 ];
+// Same curriculum shape, BEX (Electronics/Communication/Information) subjects.
 const bexSubjects = [
   { code: 'ENSH 101', title: 'Engineering Mathematics I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOECE', remark: '' },
   { code: 'ENSH 102', title: 'Engineering Physics', credits: 4, L: 4, T: 1, P: 2, totalHours: 7, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 25, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 125, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOECE', remark: '' },
@@ -174,6 +183,7 @@ const bexSubjects = [
   { code: 'ENEX 465', title: 'Elective IV', credits: 3, L: 3, T: 2, P: 1, totalHours: 6, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 25, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 125, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOECE', remark: '' },
   { code: 'ENEX 461', title: 'Project II', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOECE', remark: '' }
 ];
+// Same curriculum shape, BCT (Computer Engineering) subjects.
 const bctSubjects = [
   { code: 'ENSH 101', title: 'Engineering Mathematics I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOECE', remark: '' },
   { code: 'ENCT 101', title: 'Computer Programming', credits: 3, L: 3, T: 1, P: 3, totalHours: 7, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 50, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 150, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOECE', remark: '' },
@@ -222,6 +232,7 @@ const bctSubjects = [
   { code: 'ENCT 462', title: 'Internship', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOECE', remark: '' },
   { code: 'ENCT 461', title: 'Project II', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOECE', remark: '' }
 ];
+// Same curriculum shape, BME (Mechanical Engineering) subjects.
 const bmeSubjects = [
   { code: 'ENSH 101', title: 'Engineering Mathematics I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOMAE', remark: '' },
   { code: 'ENSH 103', title: 'Engineering Chemistry', credits: 3, L: 3, T: 1, P: 3, totalHours: 7, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 25, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 125, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOMAE', remark: '' },
@@ -273,6 +284,7 @@ const bmeSubjects = [
   { code: 'ENME 461', title: 'Project II', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOMAE', remark: '' },
   { code: 'ENME 462', title: 'Industrial Attachment', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOMAE', remark: '' }
 ];
+// Same curriculum shape, BAE (Aerospace Engineering) subjects.
 const baeSubjects = [
   { code: 'ENSH 101', title: 'Engineering Mathematics I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOMAE', remark: '' },
   { code: 'ENSH 102', title: 'Engineering Physics', credits: 4, L: 4, T: 1, P: 2, totalHours: 7, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 25, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 125, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOMAE', remark: '' },
@@ -325,6 +337,7 @@ const baeSubjects = [
   { code: 'ENAS 461', title: 'Project II', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOMAE', remark: '' },
   { code: 'ENAS 465', title: 'Elective III', credits: 3, L: 3, T: 2, P: 1, totalHours: 6, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 25, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 125, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOMAE', remark: '' }
 ];
+// Same curriculum shape, BCH (Chemical Engineering) subjects.
 const bchSubjects = [
   { code: 'ENSH 101', title: 'Engineering Mathematics I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOASCE', remark: '' },
   { code: 'ENSH 103', title: 'Engineering Chemistry', credits: 3, L: 3, T: 1, P: 3, totalHours: 7, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 25, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 125, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOASCE', remark: '' },
@@ -377,6 +390,7 @@ const bchSubjects = [
   { code: 'ENCH 461', title: 'Project II', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOASCE', remark: '' },
   { code: 'ENCH 462', title: 'Internship', credits: 4, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 100, practicalFinalMarks: 50, practicalDuration: 0, totalMarks: 150, year: 4, part: 2, semester: 'Year IV: Part II', department: 'DOASCE', remark: '' }
 ];
+// Same curriculum shape, BAR (Architecture, 5-year) subjects.
 const barSubjects = [
   { code: 'ENSH 104', title: 'Mathematics for Architecture I', credits: 3, L: 3, T: 2, P: 0, totalHours: 5, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOA', remark: '' },
   { code: 'ENAR 101', title: 'Design Studio I', credits: 8, L: 2, T: 0, P: 8, totalHours: 10, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 150, practicalFinalMarks: 100, practicalDuration: 0, totalMarks: 250, year: 1, part: 1, semester: 'Year I: Part I', department: 'DOA', remark: '' },
@@ -433,10 +447,17 @@ const barSubjects = [
   { code: 'ENAR 525', title: 'Elective III', credits: 3, L: 3, T: 0, P: 0, totalHours: 3, theoryAssessmentMarks: 40, theoryFinalMarks: 60, theoryDuration: 3, practicalAssessmentMarks: 0, practicalFinalMarks: 0, practicalDuration: 0, totalMarks: 100, year: 5, part: 1, semester: 'Year V: Part I', department: 'DOA', remark: '' },
   { code: 'ENAR 561', title: 'Thesis', credits: 16, L: 0, T: 0, P: 0, totalHours: 0, theoryAssessmentMarks: 0, theoryFinalMarks: 0, theoryDuration: 0, practicalAssessmentMarks: 240, practicalFinalMarks: 160, practicalDuration: 0, totalMarks: 400, year: 5, part: 2, semester: 'Year V: Part II', department: 'DOA', remark: '' }
 ];
+// addProgram strips the department field and stamps each subject with the
+// given program code. The department is dropped because the Subject model has
+// no department field — a subject's department is implied by its program, and
+// a shared subject (e.g. ENSH 101) may belong to several programs.
 const addProgram = (arr, prog) => arr.map(s => {
   const { department, ...rest } = s;
   return { ...rest, program: prog };
 });
+// Every program's subjects, each tagged with its program code. The same
+// subject code (e.g. "ENSH 101") appears multiple times — once per program
+// that offers it — which is exactly what the compound unique index allows.
 const tagged = [
   ...addProgram(bceSubjects, 'BCE'),
   ...addProgram(belSubjects, 'BEL'),
@@ -447,12 +468,17 @@ const tagged = [
   ...addProgram(bchSubjects, 'BCH'),
   ...addProgram(barSubjects, 'BAR'),
 ];
+// Collapse the duplicated subject codes into one document per code|year|part:
+// first collect, for each such key, the set of programs that offer it.
 const progCount = {};
 for (const s of tagged) {
   const key = `${s.code}|${s.year}|${s.part}`;
   if (!progCount[key]) progCount[key] = new Set();
   progCount[key].add(s.program);
 }
+// Keep only the first occurrence of each key, rewriting its program field to
+// the comma-separated list of all programs offering it (e.g. "BCE, BEL") —
+// the format the Subject model uses for shared subjects.
 const seen = new Set();
 const allSubjects = [];
 for (const s of tagged) {
@@ -473,6 +499,9 @@ const upsertBy = (model, docs, key) =>
     updateOne: { filter: { [key]: doc[key] }, update: { $set: doc }, upsert: true },
   })));
 
+// Main seed routine: connects to MongoDB, upserts the reference collections
+// (departments, programs, subjects) then upserts every teacher. Running this
+// script is idempotent — re-running it refreshes data but never duplicates it.
 async function seed() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
@@ -487,6 +516,9 @@ async function seed() {
     await upsertBy(Subject, allSubjects, 'code');
     console.log(`${allSubjects.length} subjects seeded`);
 
+    // Teacher seed list: real faculty for most departments plus placeholder
+    // hod/dhod/teacher accounts for DOASCE, DOEE and DOCE (marked below), so
+    // every department has working logins. All share password "teacher123".
     const teachersData = [
       // === Keep existing placeholder teachers for DOASCE, DOEE, DOCE ===
       { name: 'Dr. HoD (DOASCE)', email: 'hod@doasce.edu.np', password: 'hod123', contact: '9851001001', designation: 'Professor', department_code: 'DOASCE', subject_codes: [], role: 'hod', max_hours_per_week: 15 },
@@ -630,6 +662,8 @@ async function seed() {
 
     console.log('\nSeed completed!');
     console.log('Teacher count per department:');
+    // Local tally of how many seeded teachers each department has, purely for
+    // the summary log printed after seeding.
     const deptCounts = {};
     for (const t of teachersData) {
       deptCounts[t.department_code] = (deptCounts[t.department_code] || 0) + 1;

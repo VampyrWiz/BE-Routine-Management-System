@@ -1,3 +1,5 @@
+// Dashboard — landing page after login. Shows aggregate stats, the logged-in
+// teacher's profile card, and the 5 most recent routine entries.
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';

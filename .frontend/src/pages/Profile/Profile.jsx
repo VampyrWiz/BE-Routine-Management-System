@@ -3,6 +3,9 @@
 // their password. On save it calls PUT /api/auth/profile then updates the
 // AuthContext so the sidebar and topbar immediately reflect the new values
 // without requiring a re-login.
+// useState: manages the editable form fields and status messages; useAuth:
+// provides the current teacher + updateTeacher to sync changes; api: the
+// pre-configured axios instance used to call PUT /api/auth/profile.
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';

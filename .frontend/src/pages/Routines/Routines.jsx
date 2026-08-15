@@ -1,3 +1,7 @@
+// Routines page ("Teacher Schedule") — the core planning screen. HoD/DHoD
+// create/edit/delete and approve routine entries; teachers see a read-only
+// list of only their own entries. Supports co-taught sessions, alternate-week
+// practicals, and parallel elective options.
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';

@@ -1,8 +1,12 @@
 // Layout composes the fixed Sidebar + sticky Topbar + scrollable main content area
 // into the shell that wraps every authenticated page.
+// Sidebar: left navigation filtered by role; useAuth/useTheme: expose the
+// logged-in teacher and the dark/light toggle for the topbar.
 import Sidebar from '../Sidebar/Sidebar';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+// Router hooks: useNavigate triggers page changes from the topbar buttons,
+// useLocation reports the current path for active-nav highlighting.
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function Layout({ children }) {
@@ -15,6 +19,8 @@ export default function Layout({ children }) {
   // so we can highlight the active nav item.
   const activePath = '/' + location.pathname.split('/')[1];
 
+  // handleNavigate is the click handler for sidebar items — it simply calls
+  // the router's navigate(), keeping Sidebar presentational.
   const handleNavigate = (path) => {
     navigate(path);
   };

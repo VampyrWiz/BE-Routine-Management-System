@@ -1,3 +1,5 @@
+// Programs page — read-only reference list of degree programs (code, full
+// name, parent department, duration) used across the app for dropdowns.
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 

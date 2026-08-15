@@ -1,6 +1,11 @@
+// Loads environment variables from .env (PORT, MONGO_URI, JWT_SECRET) into
+// process.env so credentials/config never live in source code.
 require('dotenv').config();
+// express: web framework used to define routes and middleware.
 const express = require('express');
+// cors: allows the browser frontend (different origin/port) to call the API.
 const cors = require('cors');
+// connectDB: establishes the MongoDB connection before serving requests.
 const connectDB = require('./src/config/db');
 
 // Route modules — each is scoped to a specific domain entity.
@@ -12,6 +17,7 @@ const departmentRoutes = require('./src/routes/departments');
 const routineRoutes = require('./src/routes/routines');
 const approvalRoutes = require('./src/routes/approvals');
 
+// app: the Express application object; all middleware and routes register on it.
 const app = express();
 
 // Global middleware:

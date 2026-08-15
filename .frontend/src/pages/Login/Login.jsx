@@ -1,3 +1,5 @@
+// Login page — the only public route. Collects email + password and calls the
+// AuthContext login(), which hits POST /api/auth/login and stores the JWT.
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';

@@ -3,6 +3,8 @@
 // CSS custom properties (Gruvbox palette) via attribute selectors.
 import { createContext, useContext, useState, useEffect } from 'react';
 
+// ThemeContext: the React context object carrying theme state + toggle().
+// Components consume it via the useTheme() hook below.
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {

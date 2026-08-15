@@ -4,6 +4,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
 
+// AuthContext: the React context object that carries auth state + methods.
+// Components consume it via the useAuth() hook below.
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {

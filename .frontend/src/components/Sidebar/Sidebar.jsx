@@ -1,4 +1,5 @@
 // Sidebar renders the navigation menu filtered by the current user's role.
+// useAuth: reads teacher.role to decide which nav items are visible.
 import { useAuth } from '../../context/AuthContext';
 
 // Each nav item defines a route path, display label, icon, and the

@@ -1,3 +1,6 @@
+// Approvals page — the teaching-hour approval workflow. Teachers submit a
+// request to raise their max_hours_per_week; HoD/DHoD review and approve or
+// reject it, and approval lifts the teacher's limit.
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
@@ -17,6 +20,8 @@ export default function Approvals() {
   const [remarks, setRemarks] = useState('');
   const [requestForm, setRequestForm] = useState(INIT_REQUEST);
 
+  // Derived flag: true for HoD/DHoD — controls the Actions column and the
+  // Review modal, which only approvers see.
   const isHodOrDhod = teacher?.role === 'hod' || teacher?.role === 'dhod';
 
   useEffect(() => { fetchApprovals(); }, []);

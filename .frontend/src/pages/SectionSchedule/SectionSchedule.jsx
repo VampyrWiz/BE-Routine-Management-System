@@ -1,3 +1,6 @@
+// SectionSchedule — read-only weekly timetable per section (HoD/DHoD only),
+// rendered in the printed-routine format (period columns, one row per group)
+// with teacher abbreviations and a PNG export via html2canvas.
 import { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import api from '../../api/axios';

@@ -1,3 +1,5 @@
+// Subjects page — browse, filter (program/year/part), and add/edit subjects
+// from the curriculum. Read access is available to every role.
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 

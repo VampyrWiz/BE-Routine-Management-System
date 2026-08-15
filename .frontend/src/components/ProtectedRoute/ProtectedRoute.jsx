@@ -1,5 +1,7 @@
 // ProtectedRoute guards pages behind authentication and role checks.
 // It prevents unauthorised users from accessing restricted routes.
+// Navigate: renders a redirect in place of the page (react-router's component
+// for programmatic <Redirect>); useAuth: provides teacher + loading state.
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 

@@ -1,3 +1,5 @@
+// Departments page — read-only reference list of the college's departments
+// (short code + full name), the organisational grouping for the whole system.
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 
