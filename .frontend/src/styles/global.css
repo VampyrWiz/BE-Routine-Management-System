@@ -245,6 +245,12 @@ a {
   background: var(--bg-hover);
 }
 
+/* Light theme: the pale moon emoji lacks contrast on the light topbar, so
+   darken and boost it to match the sun's visibility in dark theme. */
+[data-theme="light"] .theme-icon {
+  filter: brightness(0.65) saturate(1.6);
+}
+
 /* ===== Logout Button ===== */
 .logout-btn {
   padding: 6px 16px;
@@ -334,7 +340,8 @@ th {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   font-weight: 600;
-  text-align: left;
+  text-align: center;
+  vertical-align: middle;
   padding: 10px 12px;
   border-bottom: 1px solid var(--border-color);
   font-size: 12px;
@@ -346,6 +353,8 @@ td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
+  text-align: center;
+  vertical-align: middle;
 }
 
 tr:hover td {

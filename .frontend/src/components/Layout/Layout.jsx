@@ -49,7 +49,7 @@ export default function Layout({ children }) {
             </div>
             {/* Theme toggle button switches between dark (sun icon) and light (moon icon) */}
             <button className="theme-btn" onClick={toggle} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>
-              {theme === 'dark' ? '☀️' : '🌙'}
+              <span className="theme-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
             </button>
             <button className="logout-btn" onClick={logout}>Logout</button>
           </div>

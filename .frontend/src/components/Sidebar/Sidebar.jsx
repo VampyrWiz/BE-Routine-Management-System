@@ -10,7 +10,9 @@ const navItems = [
   { path: '/subjects', label: 'Subjects', icon: '📚', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/programs', label: 'Programs', icon: '🎓', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/departments', label: 'Departments', icon: '🏛️', roles: ['hod', 'dhod', 'teacher'] },
-  { path: '/routines', label: 'Teacher Schedule', icon: '📅', roles: ['hod', 'dhod', 'teacher'] },
+  { path: '/routines', label: 'Edit Routine', icon: '📝', roles: ['hod', 'dhod'] },
+  // Teacher Schedule — own weekly timetable for every role
+  { path: '/teacher-schedule', label: 'Teacher Schedule', icon: '📅', roles: ['hod', 'dhod', 'teacher'] },
   // Section Schedule (the printable timetable) is restricted to HoD/DHoD —
   // routine planning is their job, teachers see only their own schedule.
   { path: '/section-schedule', label: 'Section Schedule', icon: '🗓️', roles: ['hod', 'dhod'] },

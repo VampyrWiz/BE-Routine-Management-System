@@ -4,24 +4,11 @@
 import { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import api from '../../api/axios';
-
-// Teaching week runs Monday to Friday — the day blocks of the timetable grid.
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+import { DAYS, fixedSlots, toMin } from '../../utils/routineGrid';
 
 // Class time runs 09:15–16:45 in ten fixed 45-minute periods, mirroring the
 // printed routine format (e.g. BCT_III_II_AB.pdf). Periods are the grid
 // columns; each day has one row per group letter of the section.
-const fmtMin = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-const CLASS_START = 9 * 60 + 15;  // 09:15
-const CLASS_END = 16 * 60 + 45;   // 16:45
-const SLOT_MINUTES = 45;
-const fixedSlots = [];
-for (let m = CLASS_START; m < CLASS_END; m += SLOT_MINUTES) {
-  fixedSlots.push(`${fmtMin(m)}-${fmtMin(Math.min(m + SLOT_MINUTES, CLASS_END))}`);
-}
-
-// toRoman converts a 1-based year/part number to the Roman numeral used in
-// the semester string (e.g. 2 -> "II" so "Year II: Part I").
 const toRoman = (n) => ['I', 'II', 'III', 'IV', 'V'][Number(n) - 1] || n;
 
 // getTeacherAbbrev builds a short code from a teacher name (e.g. "Aman
@@ -42,12 +29,6 @@ const getTeacherAbbrev = (name) => {
 // INIT_FILTER drives the cascading Program -> Year -> Part -> Section selects.
 // Both groups of the section are always shown, like the printed routine.
 const INIT_FILTER = { program: '', year: '', part: '', section: '' };
-
-// toMin converts "HH:MM" to minutes since midnight for period math.
-const toMin = (t) => {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
-};
 
 export default function SectionSchedule() {
   const [routines, setRoutines] = useState([]);

@@ -1,7 +1,7 @@
-// Routines page ("Teacher Schedule") — the core planning screen. HoD/DHoD
-// create/edit/delete and approve routine entries; teachers see a read-only
-// list of only their own entries. Supports co-taught sessions, alternate-week
-// practicals, and parallel elective options.
+// Routines page ("Edit Routine") — the core planning screen for HoD/DHoD:
+// create/edit/delete and approve routine entries. Teachers never see this
+// page (their own weekly view is the TeacherSchedule page). Supports
+// co-taught sessions, alternate-week practicals, and parallel elective options.
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
@@ -44,13 +44,10 @@ export default function Routines() {
 
   useEffect(() => {
     fetchRoutines();
-    // Only hod/dhod need the reference data for the create/edit modal;
-    // teachers don't create/edit routines so they don't need this data
-    if (isHodOrDhod) {
-      fetchTeachers();
-      fetchPrograms();
-      fetchSubjects();
-    }
+    // Reference data for the create/edit modal (teachers, programs, subjects).
+    fetchTeachers();
+    fetchPrograms();
+    fetchSubjects();
   }, [teacher]);
 
   const fetchRoutines = async () => {
@@ -91,17 +88,6 @@ export default function Routines() {
       console.error(err);
     }
   };
-
-  // filteredRoutines: teachers see only their own assigned routines, while
-  // hod/dhod see all entries. The teacher_id field can be either a populated
-  // object (from server-side population) or a raw ID string, so we handle
-  // both cases with typeof checks.
-  const filteredRoutines = teacher?.role === 'teacher'
-    ? routines.filter(r => {
-        const tid = typeof r.teacher_id === 'object' ? r.teacher_id?._id : r.teacher_id;
-        return tid === teacher._id;
-      })
-    : routines;
 
   // getTeacherName resolves a teacher reference to a display name.
   // The teacher_id can be:
@@ -303,21 +289,14 @@ export default function Routines() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2>Teacher Schedule</h2>
-        {/* Add Entry button is gated by isHodOrDhod — teachers cannot create entries */}
+        <h2>Edit Routine</h2>
+        {/* Add Entry — opens the create form; the page is hod/dhod-only */}
         {isHodOrDhod && (
           <button className="btn btn-primary" onClick={() => { setEditData(null); setForm(INIT_FORM); setShowModal(true); }}>
             + Add Entry
           </button>
         )}
       </div>
-
-      {/* Informational banner for teachers: clarifies why they see fewer entries */}
-      {teacher?.role === 'teacher' && (
-        <div className="alert alert-info" style={{ marginBottom: 16 }}>
-          Showing your assigned routines only.
-        </div>
-      )}
 
       <div className="card">
         <div className="table-container">
@@ -339,7 +318,7 @@ export default function Routines() {
               </tr>
             </thead>
             <tbody>
-              {filteredRoutines.map(r => (
+              {routines.map(r => (
                 <tr key={r._id}>
                   <td>{r.day}</td>
                   <td>{r.startTime} - {r.endTime}</td>
@@ -384,7 +363,7 @@ export default function Routines() {
                   )}
                 </tr>
               ))}
-              {filteredRoutines.length === 0 && (
+              {routines.length === 0 && (
                 <tr>
                   {/* colSpan adjusts to the number of visible columns
                       depending on whether actions are available */}
