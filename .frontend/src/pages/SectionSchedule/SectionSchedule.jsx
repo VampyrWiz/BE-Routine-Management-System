@@ -430,7 +430,6 @@ export default function SectionSchedule() {
                               key={slot}
                               colSpan={span}
                               rowSpan={whole ? groupLetters.length : 1}
-                              style={{ verticalAlign: 'top' }}
                             >
                               {cellBody(here)}
                             </td>
