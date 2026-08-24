@@ -14,6 +14,8 @@ import TeacherSchedule from './pages/TeacherSchedule/TeacherSchedule';
 // Section Schedule — read-only weekly timetable grouped per section, built
 // from the same routine entries the teacher schedule manages.
 import SectionSchedule from './pages/SectionSchedule/SectionSchedule';
+// Room Schedule — weekly timetable per room, visible to every role.
+import RoomSchedule from './pages/RoomSchedule/RoomSchedule';
 import Approvals from './pages/Approvals/Approvals';
 // Profile page — allows any authenticated user to edit their own account
 // details (name, email, contact, designation) and change their password.
@@ -50,6 +52,10 @@ export default function App() {
           "Sign in as guest"; its data comes from the public /routines/public
           endpoint so no token is needed). */}
       <Route path="/section-schedule" element={<AppLayout roles={['hod', 'dhod', 'teacher', 'guest']}><SectionSchedule /></AppLayout>} />
+      {/* Room Schedule — read-only weekly timetable per room, like the section
+          schedule: visible to every role including guests (data comes from
+          the public endpoint). */}
+      <Route path="/room-schedule" element={<AppLayout roles={['hod', 'dhod', 'teacher', 'guest']}><RoomSchedule /></AppLayout>} />
       <Route path="/approvals" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Approvals /></AppLayout>} />
       {/* Profile is accessible to all authenticated roles — every teacher
           should be able to update their own contact info and password. */}

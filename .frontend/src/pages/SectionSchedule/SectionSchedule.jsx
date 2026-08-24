@@ -3,9 +3,9 @@
 // columns, one row per group) with teacher abbreviations and a PNG export
 // via html2canvas.
 import { useState, useEffect, useRef } from 'react';
-import html2canvas from 'html2canvas';
 import api from '../../api/axios';
 import { DAYS, fixedSlots, toMin } from '../../utils/routineGrid';
+import downloadElementPng from '../../utils/download';
 
 // Class time runs 09:15–16:45 in ten fixed 45-minute periods, mirroring the
 // printed routine format (e.g. BCT_III_II_AB.pdf). Periods are the grid
@@ -116,11 +116,18 @@ export default function SectionSchedule() {
   // name as its group (e.g. group "AB" in section "AB").
   const isWholeSection = (r) => !r.group || r.group === r.section;
 
+  // An elective entry: either a UI-created elective block (is_elective flag)
+  // or an older row whose course is named "Elective …". Both render as one
+  // clean cell per weekly slot, with details in the legend.
+  const isElectiveEntry = (r) =>
+    !!r.is_elective || /elective/i.test(`${r.subject_id?.title || ''} ${r.course_code || ''} ${r.subject_name || ''}`);
+
   // Place each entry onto the grid: it is anchored to the first period it
   // covers and colSpan spans its full duration across consecutive periods.
   // Whole-section entries also rowSpan across all group rows of the day,
   // like the merged lectures in the printed routine.
   const placed = [];
+  const seenElectiveSlots = new Set();
   for (const r of sectionRoutines) {
     const start = toMin(r.startTime);
     const end = toMin(r.endTime);
@@ -129,6 +136,14 @@ export default function SectionSchedule() {
       return start >= from && start < to;
     });
     if (first < 0) continue; // outside class time
+    // All electives sharing one day+slot collapse into a single cell —
+    // regardless of how they were grouped when created. The option and
+    // teacher breakdown goes to the legend instead.
+    if (isElectiveEntry(r)) {
+      const key = `${r.day}|${first}`;
+      if (seenElectiveSlots.has(key)) continue;
+      seenElectiveSlots.add(key);
+    }
     let span = 1;
     while (first + span < fixedSlots.length && end > toMin(fixedSlots[first + span].split('-')[0])) span++;
     placed.push({ r, day: r.day, period: first, span, whole: isWholeSection(r) });
@@ -168,8 +183,10 @@ export default function SectionSchedule() {
   // encounter order so colliding codes can be resolved deterministically.
   const teacherInfo = new Map();
   let order = 0;
-  for (const p of placed) {
-    for (const t of entryTeacherObjs(p.r)) {
+  // Built from every section routine (not just placed entries) so teachers
+  // who only appear in the elective legend still get collision-free codes.
+  for (const r of sectionRoutines) {
+    for (const t of entryTeacherObjs(r)) {
       const name = getTeacherName(t);
       if (!name || name === '-') continue;
       if (!teacherInfo.has(name)) {
@@ -198,41 +215,45 @@ export default function SectionSchedule() {
   // abbrevOf resolves the final code (with collision suffix) for a teacher.
   const abbrevOf = (name) => abbrevByName.get(name) || getTeacherAbbrev(name);
 
+  // Elective legend lines: one per weekly slot occupied by electives,
+  // listing every option (subject choice) with its teachers and room — e.g.
+  // "Elective II: A (BJ+TA) @203, B (MM) @205". Keyed by day+time so options
+  // collapse into one line even if they were created as separate blocks.
+  const electiveLines = [];
+  {
+    const bySlot = new Map();
+    for (const r of sectionRoutines) {
+      if (!isElectiveEntry(r)) continue;
+      const key = `${r.day}|${r.startTime}|${r.endTime}`;
+      if (!bySlot.has(key)) {
+        bySlot.set(key, {
+          title: r.subject_id?.title || r.course_code || 'Elective',
+          options: [],
+        });
+      }
+      const t = entryTeachers(r).map(abbrevOf).join('+');
+      bySlot.get(key).options.push(
+        `${r.subject_name}${t ? ` (${t})` : ''}${r.room ? ` @${r.room}` : ''}`
+      );
+    }
+    for (const g of bySlot.values()) {
+      electiveLines.push(`${g.title}: ${g.options.join(', ')}`);
+    }
+  }
+
   const hasSelection = filter.program && filter.year && filter.part && filter.section;
 
-  // handleDownload captures the visible schedule grid as a PNG image. The
-  // element's full scroll size is used so an overflowed table is not cut.
+  // handleDownload exports the routine (title + grid + legend) via the
+  // shared PNG helper — hug-to-content with a 1cm margin on all sides.
   const [exporting, setExporting] = useState(false);
   const handleDownload = async () => {
     if (!scheduleRef.current) return;
     setExporting(true);
     try {
-      const el = scheduleRef.current;
-      // The wrapper itself is transparent — take the card's themed background
-      // so dark-mode exports stay readable.
-      const bg = getComputedStyle(el.closest('.card') || el).backgroundColor || '#ffffff';
-      // Hug the content while capturing: a full-width block would leave blank
-      // margins in the PNG, and width:max-content also stops the scrollable
-      // table container from clipping a wide grid. windowWidth makes the
-      // render viewport match so the clone lays out identically. Manual
-      // width/height overrides are dropped — html2canvas then crops the
-      // canvas exactly to the element.
-      el.style.width = 'max-content';
-      let canvas;
-      try {
-        canvas = await html2canvas(el, {
-          scale: 2,
-          backgroundColor: bg,
-          windowWidth: el.offsetWidth,
-          useCORS: true,
-        });
-      } finally {
-        el.style.width = '';
-      }
-      const link = document.createElement('a');
-      link.download = `${filter.program}-Y${filter.year}P${filter.part}-${filter.section}-routine.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      await downloadElementPng(
+        scheduleRef.current,
+        `${filter.program}-Y${filter.year}P${filter.part}-${filter.section}-routine.png`
+      );
     } catch (err) {
       console.error(err);
       alert('Failed to export the schedule as PNG');
@@ -253,7 +274,9 @@ export default function SectionSchedule() {
     return entries.map(({ r }) => {
       const typeTxt = r.type === 'L' ? '[L]' : r.type === 'T' ? '[T]' : '[P]';
       const title = r.subject_id?.title || r.course_code || '?';
-      const electiveName = r.is_elective && r.subject_name ? ` (${r.subject_name})` : '';
+      // Elective cells stay uncluttered: course title only — the option and
+      // teacher breakdown is listed in the legend below the grid.
+      const teachers = isElectiveEntry(r) ? [] : entryTeachers(r);
       // The group letter inside a cell is only useful when the section has
       // several groups (A/B); with a single group the row itself already
       // denotes it, so nothing is shown. Practicals run by both groups of the
@@ -262,17 +285,15 @@ export default function SectionSchedule() {
       const showGroup = groupLetters.length > 1 && !!r.group;
       const groupTxt = showGroup ? (r.group === r.section ? groupLetters.join('/') : r.group) : '';
       const altWeek = r.week && r.week !== 'every' ? '(Alt.Week)' : '';
-      const teachers = entryTeachers(r);
       const teacherTxt = teachers.length ? `(${teachers.map(abbrevOf).join('+')})` : '';
       return (
         <div key={r._id} style={{ fontSize: 13, lineHeight: 1.35, textAlign: 'center' }}>
           <div style={{ fontWeight: 700 }}>
-            {title}{typeTxt}{electiveName}
+            {title}{typeTxt}
           </div>
           {(groupTxt || altWeek || teacherTxt) && (
             <div style={{ color: 'var(--text-secondary)' }}>
-              {groupTxt}
-              {groupTxt && altWeek ? '·' : ''} {altWeek} {teacherTxt}
+              {[groupTxt, altWeek, teacherTxt].filter(Boolean).join(' ')}
             </div>
           )}
           {r.note && <div style={{ color: 'var(--text-secondary)' }}>{r.note}</div>}
@@ -400,7 +421,7 @@ export default function SectionSchedule() {
                               covered.add(i + brk);
                               brk++;
                             }
-                            return <td key={slot} colSpan={brk} className="break-cell">BREAK</td>;
+                            return <td key={slot} colSpan={brk} className="break-cell" />;
                           }
                           const { span, whole } = here[0];
                           for (let k = i; k < i + span; k++) covered.add(k);
@@ -409,7 +430,6 @@ export default function SectionSchedule() {
                               key={slot}
                               colSpan={span}
                               rowSpan={whole ? groupLetters.length : 1}
-                              style={{ verticalAlign: 'top' }}
                             >
                               {cellBody(here)}
                             </td>
@@ -438,6 +458,8 @@ export default function SectionSchedule() {
                 ))}
               </div>
             )}
+            {/* Elective blocks: which options exist and who teaches them. */}
+            {electiveLines.map((line, i) => <div key={i}>{line}</div>)}
           </div>
           </div>
           {/* Export button below the routine: rendered outside scheduleRef so

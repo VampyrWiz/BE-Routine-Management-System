@@ -409,10 +409,6 @@ tr:hover td {
   font-size: 12px;
 }
 
-.routine-grid tr:hover td {
-  background: transparent;
-}
-
 /* ===== Buttons ===== */
 /* Base button styles with semantic colour variants for primary, success, danger, and warning actions */
 .btn {
