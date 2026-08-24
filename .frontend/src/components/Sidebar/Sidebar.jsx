@@ -16,6 +16,8 @@ const navItems = [
   // Section Schedule — read-only weekly timetable, visible to every role
   // including guests (guests see this page only).
   { path: '/section-schedule', label: 'Section Schedule', icon: '🗓️', roles: ['hod', 'dhod', 'teacher', 'guest'] },
+  // Room Schedule — weekly timetable per room, visible to every role.
+  { path: '/room-schedule', label: 'Room Schedule', icon: '🏫', roles: ['hod', 'dhod', 'teacher', 'guest'] },
   { path: '/approvals', label: 'Approvals', icon: '✅', roles: ['hod', 'dhod', 'teacher'] },
   // Profile is available to every role so teachers can update their own
   // contact info and password without involving the HoD.
