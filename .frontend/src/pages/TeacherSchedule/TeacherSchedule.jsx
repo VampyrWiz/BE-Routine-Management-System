@@ -2,14 +2,33 @@
 // printed-routine format as the Section Schedule (period columns, one row
 // per day). Available to every role; shows only the signed-in user's own
 // routine entries (the primary teacher of each entry).
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { DAYS, fixedSlots, toMin, formatTime } from '../../utils/routineGrid';
+import downloadElementPng from '../../utils/download';
 
 export default function TeacherSchedule() {
   const { teacher } = useAuth();
   const [routines, setRoutines] = useState([]);
+  // scheduleRef targets the grid (+ legend) for PNG export.
+  const scheduleRef = useRef(null);
+  const [exporting, setExporting] = useState(false);
+
+  // handleDownload exports the weekly timetable via the shared PNG helper —
+  // hug-to-content with a 1cm margin on all sides.
+  const handleDownload = async () => {
+    if (!scheduleRef.current) return;
+    setExporting(true);
+    try {
+      await downloadElementPng(scheduleRef.current, `${teacher?.name || 'teacher'}-schedule.png`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export the schedule as PNG');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     fetchRoutines();
@@ -84,7 +103,10 @@ export default function TeacherSchedule() {
         </div>
       ) : (
         <div className="card">
-          <div className="table-container">
+          {/* scheduleRef captures only the routine itself (grid + legend);
+              the download button below sits outside the captured wrapper. */}
+          <div ref={scheduleRef}>
+            <div className="table-container">
             <table className="routine-grid">
               <thead>
                 <tr>
@@ -135,6 +157,14 @@ export default function TeacherSchedule() {
             Legend: <span className="badge badge-approved">L</span> Lecture,{' '}
             <span className="badge badge-pending">T</span> Tutorial,{' '}
             <span className="badge badge-rejected">P</span> Practical
+          </div>
+          </div>
+          {/* Download button below the routine: rendered outside scheduleRef
+              so it never appears in the exported PNG. */}
+          <div style={{ marginTop: 16, textAlign: 'right' }}>
+            <button className="btn btn-primary" onClick={handleDownload} disabled={exporting}>
+              {exporting ? 'Exporting…' : '⬇ Download PNG'}
+            </button>
           </div>
         </div>
       )}

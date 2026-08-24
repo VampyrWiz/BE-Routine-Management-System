@@ -3,9 +3,9 @@
 // columns, one row per group) with teacher abbreviations and a PNG export
 // via html2canvas.
 import { useState, useEffect, useRef } from 'react';
-import html2canvas from 'html2canvas';
 import api from '../../api/axios';
 import { DAYS, fixedSlots, toMin } from '../../utils/routineGrid';
+import downloadElementPng from '../../utils/download';
 
 // Class time runs 09:15–16:45 in ten fixed 45-minute periods, mirroring the
 // printed routine format (e.g. BCT_III_II_AB.pdf). Periods are the grid
@@ -200,44 +200,17 @@ export default function SectionSchedule() {
 
   const hasSelection = filter.program && filter.year && filter.part && filter.section;
 
-  // handleDownload captures the visible schedule grid as a PNG image. The
-  // element's full scroll size is used so an overflowed table is not cut.
+  // handleDownload exports the routine (title + grid + legend) via the
+  // shared PNG helper — hug-to-content with a 1cm margin on all sides.
   const [exporting, setExporting] = useState(false);
   const handleDownload = async () => {
     if (!scheduleRef.current) return;
     setExporting(true);
     try {
-      const el = scheduleRef.current;
-      // The wrapper itself is transparent — take the card's themed background
-      // so dark-mode exports stay readable.
-      const bg = getComputedStyle(el.closest('.card') || el).backgroundColor || '#ffffff';
-      // Hug the content while capturing: a full-width block would leave blank
-      // margins in the PNG, and width:max-content also stops the scrollable
-      // table container from clipping a wide grid. windowWidth makes the
-      // render viewport match so the clone lays out identically. Manual
-      // width/height overrides are dropped — html2canvas then crops the
-      // canvas exactly to the element. A 1cm padding (content-box, since the
-      // app sets border-box globally) adds an even margin on all four sides.
-      el.style.width = 'max-content';
-      el.style.boxSizing = 'content-box';
-      el.style.padding = '1cm';
-      let canvas;
-      try {
-        canvas = await html2canvas(el, {
-          scale: 2,
-          backgroundColor: bg,
-          windowWidth: el.offsetWidth,
-          useCORS: true,
-        });
-      } finally {
-        el.style.width = '';
-        el.style.boxSizing = '';
-        el.style.padding = '';
-      }
-      const link = document.createElement('a');
-      link.download = `${filter.program}-Y${filter.year}P${filter.part}-${filter.section}-routine.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      await downloadElementPng(
+        scheduleRef.current,
+        `${filter.program}-Y${filter.year}P${filter.part}-${filter.section}-routine.png`
+      );
     } catch (err) {
       console.error(err);
       alert('Failed to export the schedule as PNG');
