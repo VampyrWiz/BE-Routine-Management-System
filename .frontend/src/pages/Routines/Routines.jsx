@@ -22,7 +22,7 @@ const INIT_FORM = {
   day: 'Monday', startTime: '09:15', endTime: '10:00',
   program: '', year: '', part: '', subject_id: '', course_code: '',
   teacher_id: '', section: '', group: '', type: 'L',
-  electiveOptions: [], additional_teachers: [], note: '', week: 'every',
+  electiveOptions: [], additional_teachers: [], note: '', room: '', week: 'every',
 };
 
 export default function Routines() {
@@ -255,6 +255,7 @@ export default function Routines() {
       group: r.group || '',
       type: r.type || 'L',
       note: r.note || '',
+      room: r.room || '',
       week: r.week || 'every',
       additional_teachers: (r.additional_teachers || []).map(t =>
         typeof t === 'object' ? t._id : t
@@ -313,6 +314,7 @@ export default function Routines() {
                 <th>Type</th>
                 <th>Semester</th>
                 <th>Note</th>
+                <th>Room</th>
                 <th>Status</th>
                 {isHodOrDhod && <th>Actions</th>}
               </tr>
@@ -342,6 +344,7 @@ export default function Routines() {
                   <td>{r.type}</td>
                   <td>{r.semester}</td>
                   <td>{r.note || '-'}</td>
+                  <td>{r.room || '-'}</td>
                   <td>
                     {/* Status badge: color-coded pills for Approved vs Pending */}
                     {r.isApproved
@@ -474,6 +477,16 @@ export default function Routines() {
                     <option value="odd">Odd Weeks Only</option>
                     <option value="even">Even Weeks Only</option>
                   </select>
+                </div>
+                <div className="form-group">
+                  <label>Room No (optional)</label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    placeholder="e.g. 203, Lab-1"
+                    value={form.room}
+                    onChange={e => setForm({ ...form, room: e.target.value })}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Note (optional)</label>

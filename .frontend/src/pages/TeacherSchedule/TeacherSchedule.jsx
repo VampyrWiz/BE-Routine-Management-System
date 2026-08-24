@@ -55,12 +55,15 @@ export default function TeacherSchedule() {
       const title = r.subject_id?.title || r.course_code || '?';
       const groupTxt = r.group === r.section ? 'Both' : (r.group ? `Group ${r.group}` : '');
       const weekTxt = r.week && r.week !== 'every' ? `(${r.week === 'odd' ? 'Odd weeks' : 'Even weeks'})` : '';
+      const roomTxt = r.room ? `@${r.room}` : '';
+      // Secondary line: group / alternate-week marker / room.
+      const meta = [groupTxt, weekTxt].filter(Boolean).join(' · ');
       return (
         <div key={r._id} style={{ fontSize: 13, lineHeight: 1.35, textAlign: 'center' }}>
           <div style={{ fontWeight: 600 }}>{title} {typeTxt}</div>
-          {(groupTxt || weekTxt) && (
+          {(meta || roomTxt) && (
             <div style={{ color: 'var(--text-secondary)' }}>
-              {groupTxt}{groupTxt && weekTxt ? ' · ' : ''}{weekTxt}
+              {meta}{meta && roomTxt ? ' ' : ''}{roomTxt}
             </div>
           )}
           {r.note && <div style={{ color: 'var(--text-secondary)' }}>{r.note}</div>}

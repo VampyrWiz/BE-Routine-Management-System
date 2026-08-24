@@ -52,6 +52,9 @@ const routineSchema = new mongoose.Schema({
   elective_group: { type: String, default: '' },
   additional_teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }],
   note: { type: String, default: '' },
+  // room is the optional classroom/lab number for the entry, shown with the
+  // entry wherever the routine is displayed.
+  room: { type: String, default: '' },
   week: { type: String, enum: ['every', 'odd', 'even'], default: 'every' },
 }, { timestamps: true });
 
