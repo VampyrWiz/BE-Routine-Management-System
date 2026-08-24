@@ -13,9 +13,9 @@ const navItems = [
   { path: '/routines', label: 'Edit Routine', icon: '📝', roles: ['hod', 'dhod'] },
   // Teacher Schedule — own weekly timetable for every role
   { path: '/teacher-schedule', label: 'Teacher Schedule', icon: '📅', roles: ['hod', 'dhod', 'teacher'] },
-  // Section Schedule (the printable timetable) is restricted to HoD/DHoD —
-  // routine planning is their job, teachers see only their own schedule.
-  { path: '/section-schedule', label: 'Section Schedule', icon: '🗓️', roles: ['hod', 'dhod'] },
+  // Section Schedule — read-only weekly timetable, visible to every role
+  // including guests (guests see this page only).
+  { path: '/section-schedule', label: 'Section Schedule', icon: '🗓️', roles: ['hod', 'dhod', 'teacher', 'guest'] },
   { path: '/approvals', label: 'Approvals', icon: '✅', roles: ['hod', 'dhod', 'teacher'] },
   // Profile is available to every role so teachers can update their own
   // contact info and password without involving the HoD.

@@ -30,6 +30,7 @@ export default function Layout({ children }) {
     hod: 'badge-hod',
     dhod: 'badge-dhod',
     teacher: 'badge-teacher',
+    guest: 'badge-teacher',
   };
 
   return (

@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Routine = require('../models/Routine');
 const Subject = require('../models/Subject');
+const Program = require('../models/Program');
 const Teacher = require('../models/Teacher');
 const { protect } = require('../middleware/auth');
 const { allowRoles, hodOnly } = require('../middleware/roles');
@@ -58,6 +59,26 @@ const assertWorkload = async (teacher, newHours) => {
     throw err;
   }
 };
+
+// GET /api/routines/public — no auth. Read-only bundle for the Section
+// Schedule page so guests (no token) can view timetables: every routine
+// entry plus the programs/subjects its Program -> Year -> Part -> Section
+// filter cascade needs. Write access still requires HoD/DHoD below.
+router.get('/public', async (req, res) => {
+  try {
+    const [routines, programs, subjects] = await Promise.all([
+      Routine.find()
+        .populate('teacher_id', 'name email designation')
+        .populate('additional_teachers', 'name email designation')
+        .populate('subject_id', 'code title semester program'),
+      Program.find().sort({ code: 1 }),
+      Subject.find(),
+    ]);
+    res.json({ routines, programs, subjects });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // GET /api/routines — List routines with role-based filtering.
 // Teachers can only see their own routines (filter by teacher_id, including

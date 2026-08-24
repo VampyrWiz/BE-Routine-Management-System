@@ -437,6 +437,17 @@ tr:hover td {
   background: var(--accent-hover);
 }
 
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  color: var(--fg-light);
+  background: var(--accent-hover);
+}
+
 .btn-success {
   background: var(--success);
   color: var(--fg-light);

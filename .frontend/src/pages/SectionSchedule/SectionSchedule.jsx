@@ -1,6 +1,7 @@
-// SectionSchedule — read-only weekly timetable per section (HoD/DHoD only),
-// rendered in the printed-routine format (period columns, one row per group)
-// with teacher abbreviations and a PNG export via html2canvas.
+// SectionSchedule — read-only weekly timetable per section (visible to all
+// roles, including guests), rendered in the printed-routine format (period
+// columns, one row per group) with teacher abbreviations and a PNG export
+// via html2canvas.
 import { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import api from '../../api/axios';
@@ -39,34 +40,18 @@ export default function SectionSchedule() {
   const scheduleRef = useRef(null);
 
   useEffect(() => {
-    fetchRoutines();
-    fetchPrograms();
-    // Subjects drive the year/part cascade, mirroring the routine form.
-    fetchSubjects();
+    fetchScheduleData();
   }, []);
 
-  const fetchRoutines = async () => {
+  // One public request supplies everything this page needs (routines plus
+  // the programs/subjects driving the filter cascade). It requires no token,
+  // so signed-in guests can view schedules too.
+  const fetchScheduleData = async () => {
     try {
-      const { data } = await api.get('/routines');
-      setRoutines(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchPrograms = async () => {
-    try {
-      const { data } = await api.get('/programs');
-      setPrograms(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchSubjects = async () => {
-    try {
-      const { data } = await api.get('/subjects');
-      setSubjects(data);
+      const { data } = await api.get('/routines/public');
+      setRoutines(data.routines);
+      setPrograms(data.programs);
+      setSubjects(data.subjects);
     } catch (err) {
       console.error(err);
     }

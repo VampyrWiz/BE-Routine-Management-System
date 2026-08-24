@@ -45,15 +45,18 @@ export default function App() {
       <Route path="/routines" element={<AppLayout roles={['hod', 'dhod']}><Routines /></AppLayout>} />
       {/* Teacher Schedule — own weekly timetable view, available to every role */}
       <Route path="/teacher-schedule" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><TeacherSchedule /></AppLayout>} />
-      {/* Section Schedule is read-only weekly timetable grouped per section,
-          visible to HoD/DHoD only (they plan the routines). */}
-      <Route path="/section-schedule" element={<AppLayout roles={['hod', 'dhod']}><SectionSchedule /></AppLayout>} />
+      {/* Section Schedule is a read-only weekly timetable grouped per section,
+          visible to every role including guests (guests land here after
+          "Sign in as guest"; its data comes from the public /routines/public
+          endpoint so no token is needed). */}
+      <Route path="/section-schedule" element={<AppLayout roles={['hod', 'dhod', 'teacher', 'guest']}><SectionSchedule /></AppLayout>} />
       <Route path="/approvals" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Approvals /></AppLayout>} />
       {/* Profile is accessible to all authenticated roles — every teacher
           should be able to update their own contact info and password. */}
       <Route path="/profile" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Profile /></AppLayout>} />
-      {/* Catch-all: any unknown route redirects to dashboard */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* Catch-all: unknown routes go to the user's home — the section
+          schedule for guests (their only page), the dashboard for everyone else. */}
+      <Route path="*" element={<Navigate to={teacher?.role === 'guest' ? '/section-schedule' : '/dashboard'} replace />} />
     </Routes>
   );
 }

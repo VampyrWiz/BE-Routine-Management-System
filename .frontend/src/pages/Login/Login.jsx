@@ -12,8 +12,15 @@ export default function Login() {
   const [error, setError] = useState('');
   // loading flag disables the submit button to prevent double-submit while request is in-flight
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginAsGuest } = useAuth();
   const navigate = useNavigate();
+
+  // Guests skip the backend entirely: a local { role: 'guest' } identity is
+  // stored so ProtectedRoute lets them into the Section Schedule page only.
+  const handleGuest = () => {
+    loginAsGuest();
+    navigate('/section-schedule');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,6 +67,9 @@ export default function Login() {
         </div>
         <button className="btn btn-primary" type="submit" disabled={loading}>
           {loading ? 'Signing in...' : 'Sign In'}
+        </button>
+        <button className="btn btn-secondary" type="button" onClick={handleGuest}>
+          Sign in as guest
         </button>
       </form>
     </div>

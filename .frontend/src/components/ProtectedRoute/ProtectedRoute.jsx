@@ -16,9 +16,10 @@ export default function ProtectedRoute({ children, roles }) {
   if (!teacher) return <Navigate to="/login" replace />;
 
   // If authenticated but the user's role isn't in the allowed roles list,
-  // redirect to dashboard (they can still use the app, just not this page).
+  // redirect to their home page (guests' only page is the section schedule;
+  // everyone else lands on the dashboard).
   if (roles && !roles.includes(teacher.role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={teacher.role === 'guest' ? '/section-schedule' : '/dashboard'} replace />;
   }
 
   // Authorised — render the wrapped page content.

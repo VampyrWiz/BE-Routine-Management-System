@@ -33,6 +33,15 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  // Guest sign-in: no backend call, no token. The guest identity only
+  // unlocks the read-only Section Schedule page (see App.jsx roles).
+  const loginAsGuest = () => {
+    const guest = { name: 'Guest', role: 'guest' };
+    localStorage.removeItem('token');
+    localStorage.setItem('teacher', JSON.stringify(guest));
+    setTeacher(guest);
+  };
+
   // Logout clears stored auth data from both localStorage and state.
   const logout = () => {
     localStorage.removeItem('token');
@@ -50,7 +59,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ teacher, loading, login, logout, updateTeacher }}>
+    <AuthContext.Provider value={{ teacher, loading, login, loginAsGuest, logout, updateTeacher }}>
       {children}
     </AuthContext.Provider>
   );
