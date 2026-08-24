@@ -216,8 +216,11 @@ export default function SectionSchedule() {
       // table container from clipping a wide grid. windowWidth makes the
       // render viewport match so the clone lays out identically. Manual
       // width/height overrides are dropped — html2canvas then crops the
-      // canvas exactly to the element.
+      // canvas exactly to the element. A 1cm padding (content-box, since the
+      // app sets border-box globally) adds an even margin on all four sides.
       el.style.width = 'max-content';
+      el.style.boxSizing = 'content-box';
+      el.style.padding = '1cm';
       let canvas;
       try {
         canvas = await html2canvas(el, {
@@ -228,6 +231,8 @@ export default function SectionSchedule() {
         });
       } finally {
         el.style.width = '';
+        el.style.boxSizing = '';
+        el.style.padding = '';
       }
       const link = document.createElement('a');
       link.download = `${filter.program}-Y${filter.year}P${filter.part}-${filter.section}-routine.png`;
