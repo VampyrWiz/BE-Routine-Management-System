@@ -208,15 +208,27 @@ export default function SectionSchedule() {
     setExporting(true);
     try {
       const el = scheduleRef.current;
-      const bg = getComputedStyle(el).backgroundColor || '#ffffff';
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        backgroundColor: bg,
-        width: el.scrollWidth,
-        height: el.scrollHeight,
-        windowWidth: el.scrollWidth,
-        useCORS: true,
-      });
+      // The wrapper itself is transparent — take the card's themed background
+      // so dark-mode exports stay readable.
+      const bg = getComputedStyle(el.closest('.card') || el).backgroundColor || '#ffffff';
+      // Hug the content while capturing: a full-width block would leave blank
+      // margins in the PNG, and width:max-content also stops the scrollable
+      // table container from clipping a wide grid. windowWidth makes the
+      // render viewport match so the clone lays out identically. Manual
+      // width/height overrides are dropped — html2canvas then crops the
+      // canvas exactly to the element.
+      el.style.width = 'max-content';
+      let canvas;
+      try {
+        canvas = await html2canvas(el, {
+          scale: 2,
+          backgroundColor: bg,
+          windowWidth: el.offsetWidth,
+          useCORS: true,
+        });
+      } finally {
+        el.style.width = '';
+      }
       const link = document.createElement('a');
       link.download = `${filter.program}-Y${filter.year}P${filter.part}-${filter.section}-routine.png`;
       link.href = canvas.toDataURL('image/png');
@@ -316,16 +328,20 @@ export default function SectionSchedule() {
       </div>
 
       {hasSelection ? (
-        <div className="card" ref={scheduleRef}>
-          <div className="card-title">
-            {filter.program} — Year {['I', 'II', 'III', 'IV', 'V'][Number(filter.year) - 1] || filter.year}, Part {['I', 'II'][Number(filter.part) - 1] || filter.part} — Section {filter.section}
-          </div>
-          {sectionRoutines.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>
-              No routine entries for this section yet
+        <div className="card">
+          {/* scheduleRef captures only the routine itself (title + grid +
+              legend) for PNG export; the download button below sits outside
+              the captured wrapper so it never appears in the image. */}
+          <div ref={scheduleRef}>
+            <div className="card-title">
+              {filter.program} — Year {['I', 'II', 'III', 'IV', 'V'][Number(filter.year) - 1] || filter.year}, Part {['I', 'II'][Number(filter.part) - 1] || filter.part} — Section {filter.section}
             </div>
-          ) : (
-            <div className="table-container">
+            {sectionRoutines.length === 0 ? (
+              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>
+                No routine entries for this section yet
+              </div>
+            ) : (
+              <div className="table-container">
               <table className="routine-grid">
                 <thead>
                   <tr>
@@ -423,8 +439,9 @@ export default function SectionSchedule() {
               </div>
             )}
           </div>
-          {/* Export button at the end of the schedule: captures the grid and
-              legend as a PNG image of the current view. */}
+          </div>
+          {/* Export button below the routine: rendered outside scheduleRef so
+              it never appears in the exported PNG. */}
           {sectionRoutines.length > 0 && (
             <div style={{ marginTop: 16, textAlign: 'right' }}>
               <button className="btn btn-primary" onClick={handleDownload} disabled={exporting}>
