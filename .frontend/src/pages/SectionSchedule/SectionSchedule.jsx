@@ -421,7 +421,7 @@ export default function SectionSchedule() {
                               covered.add(i + brk);
                               brk++;
                             }
-                            return <td key={slot} colSpan={brk} className="break-cell">BREAK</td>;
+                            return <td key={slot} colSpan={brk} className="break-cell" />;
                           }
                           const { span, whole } = here[0];
                           for (let k = i; k < i + span; k++) covered.add(k);

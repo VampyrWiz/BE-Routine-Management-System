@@ -153,7 +153,7 @@ export default function RoomSchedule() {
                               let brk = 1;
                               while (i + brk < fixedSlots.length && !dayPlaced.some(p => p.period === i + brk)) brk++;
                               for (let k = i; k < i + brk; k++) covered.add(k);
-                              return <td key={slot} colSpan={brk} className="break-cell">FREE</td>;
+                              return <td key={slot} colSpan={brk} className="break-cell" />;
                             }
                             const span = here[0].span;
                             for (let k = i; k < i + span; k++) covered.add(k);
