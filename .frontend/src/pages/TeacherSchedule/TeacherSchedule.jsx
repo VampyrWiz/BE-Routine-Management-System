@@ -51,10 +51,59 @@ export default function TeacherSchedule() {
     r => isMe(r.teacher_id) || (r.additional_teachers || []).some(isMe)
   );
 
+  // An elective entry: a UI-created elective block (is_elective flag) or an
+  // older row whose course is named "Elective …".
+  const isElective = (r) =>
+    !!r.is_elective || /elective/i.test(`${r.subject_id?.title || ''} ${r.course_code || ''} ${r.subject_name || ''}`);
+
+  // Electives are booked once per section, and a teacher can hold the same
+  // course for several sections in partially overlapping windows (e.g. AB
+  // 14:30-16:45 plus CD 16:00-16:45). Each day+course group is cut into time
+  // segments between block boundaries, recording which sections attend each;
+  // adjacent segments with identical attendance fuse back into one grid
+  // entry. Cells then read "Sec AB" … "Sec AB + CD" across the slots.
+  const mergedRoutines = [];
+  const electiveGroups = new Map();
+  for (const r of myRoutines) {
+    if (!isElective(r)) {
+      mergedRoutines.push(r);
+      continue;
+    }
+    const key = `${r.day}|${r.subject_id?.title || r.course_code || ''}`;
+    if (!electiveGroups.has(key)) electiveGroups.set(key, []);
+    electiveGroups.get(key).push(r);
+  }
+  for (const entries of electiveGroups.values()) {
+    const bounds = [...new Set(entries.flatMap(e => [e.startTime, e.endTime]))]
+      .sort((a, b) => toMin(a) - toMin(b));
+    const segs = [];
+    for (let i = 0; i < bounds.length - 1; i++) {
+      const from = toMin(bounds[i]);
+      const to = toMin(bounds[i + 1]);
+      const sections = [...new Set(
+        entries
+          .filter(en => toMin(en.startTime) <= from && toMin(en.endTime) >= to)
+          .map(en => en.section)
+      )].filter(Boolean);
+      if (!sections.length) continue;
+      const prev = segs[segs.length - 1];
+      if (prev && prev.sections.join('|') === sections.join('|')) {
+        prev.endTime = bounds[i + 1];
+      } else {
+        segs.push({ startTime: bounds[i], endTime: bounds[i + 1], sections });
+      }
+    }
+    segs.forEach((sg, i) => mergedRoutines.push({
+      ...entries[0],
+      _id: `${entries[0]._id}#${i}`, // synthetic ids keep React keys unique
+      ...sg,
+    }));
+  }
+
   // Place each entry onto the grid: anchored at the first period it covers
   // and colSpan spanning its full duration across consecutive periods.
   const placed = [];
-  for (const r of myRoutines) {
+  for (const r of mergedRoutines) {
     const start = toMin(r.startTime);
     const end = toMin(r.endTime);
     const first = fixedSlots.findIndex(fs => {
@@ -73,11 +122,16 @@ export default function TeacherSchedule() {
     return entries.map(({ r }) => {
       const typeTxt = r.type === 'L' ? '[L]' : r.type === 'T' ? '[T]' : '[P]';
       const title = r.subject_id?.title || r.course_code || '?';
-      const groupTxt = r.group === r.section ? 'Both' : (r.group ? `Group ${r.group}` : '');
+      // Electives show which sections attend (merged duplicates read
+      // "AB + CD"); regular entries keep the group marker only.
+      const secTxt = isElective(r)
+        ? [...new Set(r.sections || [r.section])].filter(Boolean).join(' + ')
+        : '';
+      const groupTxt = secTxt ? '' : (r.group === r.section ? 'Both' : (r.group ? `Group ${r.group}` : ''));
       const weekTxt = r.week && r.week !== 'every' ? `(${r.week === 'odd' ? 'Odd weeks' : 'Even weeks'})` : '';
       const roomTxt = r.room ? `@${r.room}` : '';
-      // Secondary line: group / alternate-week marker / room.
-      const meta = [groupTxt, weekTxt].filter(Boolean).join(' · ');
+      // Secondary line: section / group / alternate-week marker / room.
+      const meta = [secTxt && `Sec ${secTxt}`, groupTxt, weekTxt].filter(Boolean).join(' · ');
       return (
         <div key={r._id} style={{ fontSize: 13, lineHeight: 1.35, textAlign: 'center' }}>
           <div style={{ fontWeight: 600 }}>{title} {typeTxt}</div>
