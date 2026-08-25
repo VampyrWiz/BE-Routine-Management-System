@@ -83,7 +83,7 @@ router.get('/public', async (req, res) => {
 // GET /api/routines — List routines with role-based filtering.
 // Teachers can only see their own routines (filter by teacher_id, including
 // co-taught sessions via additional_teachers).
-// DHoDs can only see routines for their department.
+// hod/dhod see every routine across all departments.
 // Additional query parameters (semester, department, teacher_id) allow
 // further narrowing. populate is used to resolve teacher_id into
 // name, email, and designation so the frontend can display teacher info
@@ -96,9 +96,6 @@ router.get('/', protect, async (req, res) => {
         { teacher_id: req.teacher._id },
         { additional_teachers: req.teacher._id },
       ];
-    }
-    if (req.teacher.role === 'dhod') {
-      filter.department = req.teacher.department_code;
     }
     if (req.query.semester) filter.semester = req.query.semester;
     if (req.query.department) filter.department = req.query.department;

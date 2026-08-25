@@ -6,19 +6,13 @@ const { allowRoles } = require('../middleware/roles');
 
 const router = express.Router();
 
-// GET /api/teachers — List teachers with role-based scoping.
-// HoD can see all teachers across all departments.
-// DHoD is restricted to teachers within their own department by adding
-// a department_code filter. This prevents a DHoD from accessing or modifying
-// teacher data outside their organisational scope.
+// GET /api/teachers — List all teachers across every department.
+// Both HoD and DHoD have read access to the full teacher directory;
+// create/update/delete below remain HoD-only.
 // The -password projection ensures hashed passwords are never exposed.
 router.get('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
   try {
-    const filter = {};
-    if (req.teacher.role === 'dhod') {
-      filter.department_code = req.teacher.department_code;
-    }
-    const teachers = await Teacher.find(filter).select('-password');
+    const teachers = await Teacher.find({}).select('-password');
     res.json(teachers);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -34,10 +28,8 @@ router.get('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
 // guard enforces. freeHours is max_hours_per_week minus assigned hours.
 router.get('/stats', protect, allowRoles('hod', 'dhod'), async (req, res) => {
   try {
-    const filter = {};
-    if (req.teacher.role === 'dhod') filter.department_code = req.teacher.department_code;
     const [teachers, routines] = await Promise.all([
-      Teacher.find(filter).select('-password').sort({ name: 1 }),
+      Teacher.find({}).select('-password').sort({ name: 1 }),
       Routine.find(),
     ]);
     const duration = (r) => {

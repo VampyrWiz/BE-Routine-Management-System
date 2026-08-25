@@ -1,7 +1,8 @@
 // TeacherSchedule — the per-teacher weekly timetable, rendered in the same
 // printed-routine format as the Section Schedule (period columns, one row
 // per day). Available to every role; shows only the signed-in user's own
-// routine entries (the primary teacher of each entry).
+// routine entries (the primary teacher of each entry), except hod/dhod who
+// can pick any teacher from the directory and view that teacher's week.
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
@@ -11,6 +12,11 @@ import downloadElementPng from '../../utils/download';
 export default function TeacherSchedule() {
   const { teacher } = useAuth();
   const [routines, setRoutines] = useState([]);
+  // hod/dhod can browse any teacher's timetable: teachers holds the
+  // directory for the picker, viewId is 'me' or a Teacher _id.
+  const canViewAll = teacher?.role === 'hod' || teacher?.role === 'dhod';
+  const [teachers, setTeachers] = useState([]);
+  const [viewId, setViewId] = useState('me');
   // scheduleRef targets the grid (+ legend) for PNG export.
   const scheduleRef = useRef(null);
   const [exporting, setExporting] = useState(false);
@@ -21,7 +27,8 @@ export default function TeacherSchedule() {
     if (!scheduleRef.current) return;
     setExporting(true);
     try {
-      await downloadElementPng(scheduleRef.current, `${teacher?.name || 'teacher'}-schedule.png`);
+      const viewed = viewId === 'me' ? teacher : teachers.find(t => t._id === viewId);
+      await downloadElementPng(scheduleRef.current, `${viewed?.name || 'teacher'}-schedule.png`);
     } catch (err) {
       console.error(err);
       alert('Failed to export the schedule as PNG');
@@ -32,6 +39,9 @@ export default function TeacherSchedule() {
 
   useEffect(() => {
     fetchRoutines();
+    if (canViewAll) {
+      api.get('/teachers').then(({ data }) => setTeachers(data)).catch(() => {});
+    }
   }, []);
 
   const fetchRoutines = async () => {
@@ -43,12 +53,13 @@ export default function TeacherSchedule() {
     }
   };
 
-  // myRoutines: every entry the signed-in user teaches — primary teacher or
-  // co-teacher (additional_teachers). References can be populated objects or
-  // raw ID strings, so handle both.
-  const isMe = (t) => (typeof t === 'object' ? t?._id : t) === teacher?._id;
+  // displayedRoutines (myRoutines): every entry the viewed teacher teaches —
+  // as primary or co-teacher (additional_teachers). 'me' resolves to the
+  // signed-in user; hod/dhod may target any teacher from the picker.
+  // References can be populated objects or raw ID strings, so handle both.
+  const isTarget = (t) => (typeof t === 'object' ? t?._id : t) === String(viewId === 'me' ? teacher?._id : viewId);
   const myRoutines = routines.filter(
-    r => isMe(r.teacher_id) || (r.additional_teachers || []).some(isMe)
+    r => isTarget(r.teacher_id) || (r.additional_teachers || []).some(isTarget)
   );
 
   // An elective entry: a UI-created elective block (is_elective flag) or an
@@ -146,14 +157,26 @@ export default function TeacherSchedule() {
     });
   };
 
+  const viewedName = viewId === 'me' ? 'you' : teachers.find(t => t._id === viewId)?.name || 'selected teacher';
+
   return (
     <div>
-      <h2>Teacher Schedule</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <h2>Teacher Schedule</h2>
+        {canViewAll && teachers.length > 0 && (
+          <select className="form-control" style={{ maxWidth: 260 }} value={viewId} onChange={e => setViewId(e.target.value)}>
+            <option value="me">My schedule</option>
+            {teachers.filter(t => t._id !== teacher?._id).map(t => (
+              <option key={t._id} value={t._id}>{t.name} ({t.department_code})</option>
+            ))}
+          </select>
+        )}
+      </div>
 
       {myRoutines.length === 0 ? (
         <div className="card">
           <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>
-            No routine entries assigned to you yet.
+            No routine entries assigned to {viewedName} yet.
           </div>
         </div>
       ) : (

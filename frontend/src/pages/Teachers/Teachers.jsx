@@ -1,5 +1,5 @@
 // Teachers page — CRUD for teacher accounts. HoD can create/edit/delete any
-// teacher; DHoD sees (read-only) only their own department's teachers.
+// teacher; DHoD sees all departments read-only (edits are HoD-only).
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
