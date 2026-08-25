@@ -132,20 +132,20 @@ const resolveTeachers = async (primaryId, additionalIds) => {
   return teachers;
 };
 
-// POST /api/routines — Create a routine entry (HoD or DHoD only).
+// POST /api/routines — Create a routine entry (DHoD only).
 // Before saving, the handler calculates the teacher's total scheduled hours
 // by summing (endTime - startTime) across all existing routines for that teacher.
 // It also calculates the hours for the new entry being created.
 // If adding the new hours would exceed the teacher's max_hours_per_week,
 // and the teacher's role is 'teacher' (not HoD/DHoD), the request is rejected
 // with requiresApproval: true, telling the frontend that an approval request
-// must be submitted first. If the creator is a HoD, isApproved is set to true
-// automatically because the HoD's action implies approval.
+// must be submitted first. Every entry starts as isApproved: false — the
+// DHoD drafts the routine and the HoD approves it via the approve endpoint.
 // For elective courses the payload may carry electiveOptions (array of
 // { subject_name, teacher_id }) — one entry is created per option, all sharing
 // the same elective_group id so the block of parallel electives stays linked.
 // The workload check runs against every teacher listed in the options.
-router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
+router.post('/', protect, allowRoles('dhod'), async (req, res) => {
   try {
     const routineData = await resolveSubject({ ...req.body });
     const newHours = computeHours(routineData.startTime, routineData.endTime);
@@ -188,7 +188,7 @@ router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
           is_elective: true,
           additional_teachers: [],
           department: routineData.department || teacher.department_code,
-          isApproved: req.teacher.role === 'hod',
+          isApproved: false,
         }));
       }
       return res.status(201).json(created);
@@ -222,7 +222,7 @@ router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
       // additional_teachers excludes the primary teacher and keeps the order
       // submitted (deduped by resolveTeachers).
       additional_teachers: teachers.slice(1).map(t => t._id),
-      isApproved: req.teacher.role === 'hod',
+      isApproved: false,
     });
     res.status(201).json(routine);
   } catch (err) {
@@ -230,13 +230,14 @@ router.post('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
   }
 });
 
-// PUT /api/routines/:id — Update a routine entry.
+// PUT /api/routines/:id — Update a routine entry (DHoD only).
 // Subject-derived fields (course_code, semester, program) are re-resolved
 // whenever subject_id is included in the payload.
+// Any edit resets isApproved to false so the HoD re-reviews changed entries.
 // Editing an elective entry regenerates the whole elective block: every
 // option in the shared elective_group is replaced with the submitted
 // electiveOptions so day/time/section/options never drift out of sync.
-router.put('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
+router.put('/:id', protect, allowRoles('dhod'), async (req, res) => {
   try {
     const existing = await Routine.findById(req.params.id);
     if (!existing) return res.status(404).json({ message: 'Routine not found' });
@@ -262,7 +263,7 @@ router.put('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
           is_elective: true,
           additional_teachers: [],
           department: routineData.department || teacher.department_code,
-          isApproved: req.teacher.role === 'hod',
+          isApproved: false,
         }));
       }
       return res.json(updated);
@@ -272,6 +273,8 @@ router.put('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
     // list without the primary teacher.
     const teachers = await resolveTeachers(routineData.teacher_id, req.body.additional_teachers);
     routineData.additional_teachers = teachers.slice(1).map(t => t._id);
+    // Any edit goes back to Pending so the HoD re-approves the changed entry.
+    routineData.isApproved = false;
 
     const routine = await Routine.findByIdAndUpdate(req.params.id, routineData, { new: true })
       .populate('teacher_id', 'name email designation')
@@ -284,8 +287,8 @@ router.put('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
   }
 });
 
-// DELETE /api/routines/:id — Delete a routine entry.
-router.delete('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
+// DELETE /api/routines/:id — Delete a routine entry (DHoD only).
+router.delete('/:id', protect, allowRoles('dhod'), async (req, res) => {
   try {
     await Routine.findByIdAndDelete(req.params.id);
     res.json({ message: 'Routine entry deleted' });
@@ -296,8 +299,8 @@ router.delete('/:id', protect, allowRoles('hod', 'dhod'), async (req, res) => {
 
 // PUT /api/routines/:id/approve — Explicitly approve a routine (HoD only).
 // Sets isApproved to true regardless of the previous value.
-// This is used when a DHoD creates a routine (which defaults isApproved to false)
-// and the HoD reviews and approves it afterwards.
+// This is the HoD's side of the workflow: the DHoD creates and edits routine
+// entries (always isApproved: false), and the HoD reviews and approves them here.
 router.put('/:id/approve', protect, hodOnly, async (req, res) => {
   try {
     const routine = await Routine.findByIdAndUpdate(req.params.id, { isApproved: true }, { new: true });

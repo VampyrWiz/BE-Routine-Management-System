@@ -19,8 +19,8 @@ const mongoose = require('mongoose');
 // two entries sharing a slot but with different week values alternate.
 // type distinguishes Lecture / Tutorial / Practical so the system can
 // compute hour totals per category when enforcing workload limits.
-// isApproved defaults to false; it is set to true only when the routine
-// is created by a HoD or explicitly approved via the approve endpoint.
+// isApproved defaults to false; entries are created/edited by the DHoD and
+// set to true only when explicitly approved via the approve endpoint by the HoD.
 // The department field replicates the teacher's department so that
 // DHoD-level queries can filter routines without a join.
 // Elective support: an elective course (title or code contains "Elective")
