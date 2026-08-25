@@ -649,6 +649,8 @@ async function seed() {
     // Re-seeding refreshes every teacher's fields and resets their password
     // to the seed default, but keeps their _id — so existing routine entries
     // keep pointing at the same teacher instead of becoming orphaned.
+    // Drop stale unique index on shortName (from old schema) if it exists
+    try { await Teacher.collection.dropIndex('shortName_1'); } catch {}
     for (const t of teachersData) {
       const existing = await Teacher.findOne({ email: t.email });
       if (existing) {
