@@ -43,12 +43,13 @@ export default function TeacherSchedule() {
     }
   };
 
-  // myRoutines: only entries where the signed-in user is the primary teacher.
-  // teacher_id can be a populated object or a raw ID string, so handle both.
-  const myRoutines = routines.filter(r => {
-    const tid = typeof r.teacher_id === 'object' ? r.teacher_id?._id : r.teacher_id;
-    return tid === teacher?._id;
-  });
+  // myRoutines: every entry the signed-in user teaches — primary teacher or
+  // co-teacher (additional_teachers). References can be populated objects or
+  // raw ID strings, so handle both.
+  const isMe = (t) => (typeof t === 'object' ? t?._id : t) === teacher?._id;
+  const myRoutines = routines.filter(
+    r => isMe(r.teacher_id) || (r.additional_teachers || []).some(isMe)
+  );
 
   // Place each entry onto the grid: anchored at the first period it covers
   // and colSpan spanning its full duration across consecutive periods.
