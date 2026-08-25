@@ -215,11 +215,12 @@ export default function SectionSchedule() {
   // abbrevOf resolves the final code (with collision suffix) for a teacher.
   const abbrevOf = (name) => abbrevByName.get(name) || getTeacherAbbrev(name);
 
-  // Elective legend lines: one per weekly slot occupied by electives,
-  // listing every option (subject choice) with its teachers and room — e.g.
-  // "Elective II: A (BJ+TA) @203, B (MM) @205". Keyed by day+time so options
-  // collapse into one line even if they were created as separate blocks.
-  const electiveLines = [];
+  // Elective legend lines: one per distinct option set shared by the weekly
+  // elective slots, listing every option (subject choice) with its teachers
+  // and room — e.g. "Elective II: A (BJ+TA) @203, B (MM) @205". Slots with
+  // identical options (same block repeated across days) collapse into one
+  // line; options are sorted so order differences still dedupe.
+  const electiveLines = new Set();
   {
     const bySlot = new Map();
     for (const r of sectionRoutines) {
@@ -237,7 +238,7 @@ export default function SectionSchedule() {
       );
     }
     for (const g of bySlot.values()) {
-      electiveLines.push(`${g.title}: ${g.options.join(', ')}`);
+      electiveLines.add(`${g.title}: ${[...g.options].sort().join(', ')}`);
     }
   }
 
@@ -460,7 +461,7 @@ export default function SectionSchedule() {
               </div>
             )}
             {/* Elective blocks: which options exist and who teaches them. */}
-            {electiveLines.map((line, i) => <div key={i}>{line}</div>)}
+            {[...electiveLines].map((line, i) => <div key={i}>{line}</div>)}
           </div>
           </div>
           {/* Export button below the routine: rendered outside scheduleRef so
