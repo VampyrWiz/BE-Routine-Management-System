@@ -23,10 +23,9 @@ const app = express();
 // Global middleware:
 // cors() enables cross-origin requests so a frontend on a different port/domain
 // can communicate with the API.
-// express.json() parses incoming JSON request bodies into req.body.
-const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+// express/json() parses incoming JSON request bodies into req.body.
 app.use(cors({
-  origin: allowedOrigin,
+  origin: '*',
   credentials: true
 }));
 app.use(express.json());
