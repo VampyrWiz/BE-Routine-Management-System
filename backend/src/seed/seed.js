@@ -676,7 +676,7 @@ async function seed() {
     console.log('\nLogin credentials (password: teacher123 for all):');
     console.log('  DOASCE: hod@doasce.edu.np / dhod@doasce.edu.np / teacher@doasce.edu.np');
     console.log('  DOEE: hod@doee.edu.np / dhod@doee.edu.np / teacher@doee.edu.np');
-    console.log('  DOCE: hod@doce.edu.np / dhod@doce.edu.np / teacher@doce.edu.np');
+    console.log('  DOCE: hod@doce.edu.np / dhoPd@doce.edu.np / teacher@doce.edu.np');
     console.log('  DOA: ashim.bajracharya@doa.edu.np (hod) / anjana.shrestha@doa.edu.np (dhod)');
     console.log('  DOMAE: sudip.bhattrai@domae.edu.np (hod) / laxman.motra@domae.edu.np (dhod) / kamal.darlami@domae.edu.np (dhod)');
     console.log('  DOECE: ram.maharjan@doece.edu.np (hod) / prakash.prasad@doece.edu.np (dhod) / anuj.ghimire@doece.edu.np (dhod)');
