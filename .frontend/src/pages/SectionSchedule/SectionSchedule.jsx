@@ -286,14 +286,15 @@ export default function SectionSchedule() {
       const groupTxt = showGroup ? (r.group === r.section ? groupLetters.join('/') : r.group) : '';
       const altWeek = r.week && r.week !== 'every' ? '(Alt.Week)' : '';
       const teacherTxt = teachers.length ? `(${teachers.map(abbrevOf).join('+')})` : '';
+      const roomTxt = r.room ? `@${r.room}` : '';
       return (
         <div key={r._id} style={{ fontSize: 13, lineHeight: 1.35, textAlign: 'center' }}>
           <div style={{ fontWeight: 700 }}>
             {title}{typeTxt}
           </div>
-          {(groupTxt || altWeek || teacherTxt) && (
+          {(groupTxt || altWeek || teacherTxt || roomTxt) && (
             <div style={{ color: 'var(--text-secondary)' }}>
-              {[groupTxt, altWeek, teacherTxt].filter(Boolean).join(' ')}
+              {[groupTxt, altWeek, teacherTxt, roomTxt].filter(Boolean).join(' ')}
             </div>
           )}
           {r.note && <div style={{ color: 'var(--text-secondary)' }}>{r.note}</div>}
