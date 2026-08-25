@@ -24,7 +24,11 @@ const app = express();
 // cors() enables cross-origin requests so a frontend on a different port/domain
 // can communicate with the API.
 // express.json() parses incoming JSON request bodies into req.body.
-app.use(cors());
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true
+}));
 app.use(express.json());
 
 // Connect to MongoDB before handling any requests.
