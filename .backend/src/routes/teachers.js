@@ -1,5 +1,6 @@
 const express = require('express');
 const Teacher = require('../models/Teacher');
+const Routine = require('../models/Routine');
 const { protect } = require('../middleware/auth');
 const { allowRoles } = require('../middleware/roles');
 
@@ -19,6 +20,66 @@ router.get('/', protect, allowRoles('hod', 'dhod'), async (req, res) => {
     }
     const teachers = await Teacher.find(filter).select('-password');
     res.json(teachers);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/teachers/stats — Weekly teaching load per teacher (HoD/DHoD).
+// For every routine entry where the teacher is primary or co-taught
+// (additional_teachers), sums the slot duration using the same math as the
+// workload check in routines.js, and splits hours into theory (L+T) vs
+// practical (P). Counts all entries regardless of approval or odd/even week,
+// mirroring assertWorkload so these numbers always match what the workload
+// guard enforces. freeHours is max_hours_per_week minus assigned hours.
+router.get('/stats', protect, allowRoles('hod', 'dhod'), async (req, res) => {
+  try {
+    const filter = {};
+    if (req.teacher.role === 'dhod') filter.department_code = req.teacher.department_code;
+    const [teachers, routines] = await Promise.all([
+      Teacher.find(filter).select('-password').sort({ name: 1 }),
+      Routine.find(),
+    ]);
+    const duration = (r) => {
+      const [sh, sm] = r.startTime.split(':').map(Number);
+      const [eh, em] = r.endTime.split(':').map(Number);
+      return (eh - sh) + (em - sm) / 60;
+    };
+    const round = (n) => Math.round(n * 100) / 100;
+    // Aggregate per teacher id; teachers with no routines fall back to zeros.
+    const stats = new Map();
+    const add = (id, r) => {
+      const key = String(id);
+      if (!key) return;
+      const s = stats.get(key) || { classes: 0, totalHours: 0, theoryHours: 0, labHours: 0 };
+      const h = duration(r);
+      s.classes += 1;
+      s.totalHours += h;
+      if (r.type === 'P') s.labHours += h; else s.theoryHours += h;
+      stats.set(key, s);
+    };
+    for (const r of routines) {
+      add(r.teacher_id, r);
+      for (const id of r.additional_teachers || []) add(id, r);
+    }
+    const empty = { classes: 0, totalHours: 0, theoryHours: 0, labHours: 0 };
+    res.json(teachers.map(t => {
+      const s = stats.get(String(t._id)) || empty;
+      return {
+        _id: t._id,
+        name: t.name,
+        email: t.email,
+        designation: t.designation,
+        department_code: t.department_code,
+        role: t.role,
+        max_hours_per_week: t.max_hours_per_week,
+        classes: s.classes,
+        totalHours: round(s.totalHours),
+        theoryHours: round(s.theoryHours),
+        labHours: round(s.labHours),
+        freeHours: round(t.max_hours_per_week - s.totalHours),
+      };
+    }));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

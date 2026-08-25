@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: '📊', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/teachers', label: 'Teachers', icon: '👥', roles: ['hod', 'dhod'] },
+  // Statistics — per-teacher weekly load overview (hours, classes, theory/labs, free)
+  { path: '/teacher-stats', label: 'Statistics', icon: '📈', roles: ['hod', 'dhod'] },
   { path: '/subjects', label: 'Subjects', icon: '📚', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/programs', label: 'Programs', icon: '🎓', roles: ['hod', 'dhod', 'teacher'] },
   { path: '/departments', label: 'Departments', icon: '🏛️', roles: ['hod', 'dhod', 'teacher'] },
