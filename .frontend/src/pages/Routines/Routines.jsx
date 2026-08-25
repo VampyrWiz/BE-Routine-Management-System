@@ -1,5 +1,6 @@
-// Routines page ("Edit Routine") — the core planning screen for HoD/DHoD:
-// create/edit/delete and approve routine entries. Teachers never see this
+// Routines page ("Edit Routine") — the core planning screen. The DHoD
+// creates/edits/deletes routine entries; every entry starts as Pending and
+// the HoD reviews and approves it (Approve button). Teachers never see this
 // page (their own weekly view is the TeacherSchedule page). Supports
 // co-taught sessions, alternate-week practicals, and parallel elective options.
 import { useState, useEffect } from 'react';
@@ -38,9 +39,10 @@ export default function Routines() {
   const [editData, setEditData] = useState(null);
   const [form, setForm] = useState(INIT_FORM);
 
-  // Derived boolean — used throughout to conditionally render admin features
-  // like add/edit/delete buttons and the approve action
-  const isHodOrDhod = teacher?.role === 'hod' || teacher?.role === 'dhod';
+  // Derived booleans — workflow split: the DHoD drafts routines (add/edit/
+  // delete), the HoD approves pending ones.
+  const isDhod = teacher?.role === 'dhod';
+  const isHod = teacher?.role === 'hod';
 
   useEffect(() => {
     fetchRoutines();
@@ -231,7 +233,7 @@ export default function Routines() {
     setEditData(r);
     // Editing an elective entry prefills every option of the block by
     // collecting all routines sharing the same elective_group (the list is
-    // already loaded in memory for hod/dhod, who are the only editors).
+    // already loaded in memory for hod/dhod).
     const electiveOptions = r.is_elective && r.elective_group
       ? routines
           .filter(x => x.elective_group === r.elective_group)
@@ -291,8 +293,8 @@ export default function Routines() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2>Edit Routine</h2>
-        {/* Add Entry — opens the create form; the page is hod/dhod-only */}
-        {isHodOrDhod && (
+        {/* Add Entry — DHoD only; the HoD's job here is reviewing/approving */}
+        {isDhod && (
           <button className="btn btn-primary" onClick={() => { setEditData(null); setForm(INIT_FORM); setShowModal(true); }}>
             + Add Entry
           </button>
@@ -316,7 +318,8 @@ export default function Routines() {
                 <th>Note</th>
                 <th>Room</th>
                 <th>Status</th>
-                {isHodOrDhod && <th>Actions</th>}
+                {/* Both roles get an Actions column: DHoD edits, HoD approves */}
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -352,25 +355,24 @@ export default function Routines() {
                       : <span className="badge badge-pending">Pending</span>
                     }
                   </td>
-                  {/* Actions column: Edit, Delete (for hod/dhod) and Approve
-                      (only for hod, and only on unapproved entries). This keeps
-                      the UI clean by hiding irrelevant actions. */}
-                  {isHodOrDhod && (
-                    <td>
-                      <button className="btn btn-sm btn-primary" onClick={() => handleEdit(r)} style={{ marginRight: 4 }}>Edit</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(r._id)} style={{ marginRight: 4 }}>Del</button>
-                      {!r.isApproved && (
-                        <button className="btn btn-sm btn-success" onClick={() => handleApprove(r._id)}>Approve</button>
-                      )}
-                    </td>
-                  )}
+                  {/* Actions column, per role: DHoD gets Edit/Delete on every
+                      entry; HoD gets Approve only on unapproved entries. */}
+                  <td>
+                    {isDhod && (
+                      <>
+                        <button className="btn btn-sm btn-primary" onClick={() => handleEdit(r)} style={{ marginRight: 4 }}>Edit</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(r._id)} style={{ marginRight: 4 }}>Del</button>
+                      </>
+                    )}
+                    {isHod && !r.isApproved && (
+                      <button className="btn btn-sm btn-success" onClick={() => handleApprove(r._id)}>Approve</button>
+                    )}
+                  </td>
                 </tr>
               ))}
               {routines.length === 0 && (
                 <tr>
-                  {/* colSpan adjusts to the number of visible columns
-                      depending on whether actions are available */}
-                  <td colSpan={isHodOrDhod ? 12 : 11} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>No routines found</td>
+                  <td colSpan={13} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 24 }}>No routines found</td>
                 </tr>
               )}
             </tbody>

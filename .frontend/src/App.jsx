@@ -6,6 +6,9 @@ import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import Login from './pages/Login/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Teachers from './pages/Teachers/Teachers';
+// Teacher Stats — per-teacher weekly load: hours, class count, theory vs
+// practical split, and free hours against the weekly max.
+import TeacherStats from './pages/TeacherStats/TeacherStats';
 import Subjects from './pages/Subjects/Subjects';
 import Programs from './pages/Programs/Programs';
 import Departments from './pages/Departments/Departments';
@@ -41,6 +44,8 @@ export default function App() {
       {/* Each protected route restricts access by role array — only matching roles can view the page */}
       <Route path="/dashboard" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Dashboard /></AppLayout>} />
       <Route path="/teachers" element={<AppLayout roles={['hod', 'dhod']}><Teachers /></AppLayout>} />
+      {/* Teacher Stats — weekly load overview, same audience as Teachers */}
+      <Route path="/teacher-stats" element={<AppLayout roles={['hod', 'dhod']}><TeacherStats /></AppLayout>} />
       <Route path="/subjects" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Subjects /></AppLayout>} />
       <Route path="/programs" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Programs /></AppLayout>} />
       <Route path="/departments" element={<AppLayout roles={['hod', 'dhod', 'teacher']}><Departments /></AppLayout>} />
